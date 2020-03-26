@@ -67,6 +67,7 @@ Metoda statystyczna, której celem jest opisanie zależności między zaobserwow
 * <font size="4"><span style = "color:red;">Analiza głównych składowych</span>  
 Zbiór danych składający się z N obserwacji, z których każda obejmuje K zmiennych, można interpretować jako chmurę N punktów w przestrzeni K-wymiarowej. Celem PCA jest taki obrót układu współrzędnych, aby maksymalizować w pierwszej kolejności wariancję pierwszej współrzędnej, następnie wariancję drugiej współrzędnej itd.. W ten sposób konstruowana jest nowa przestrzeń obserwacji, w której najwięcej zmienności wyjaśniają początkowe czynniki.</font>  
 
+## metoda PCA
 
 ## 1. Oszacowanie liczby wymiarów   
 
@@ -122,11 +123,18 @@ matrixplot(imp)
 vis_miss(imp)
 ```   
 
-## Wizualizacja danych imputowanych  
+## Wywołanie metody PCA na imputowanych danych  
 ```{r imputed_data_vis2}
 res.pca <- PCA(res.comp$completeObs, graph = FALSE)
 plot(res.pca, choix="var")
 ```     
+
+## Wizualizacja niepewności  
+```{r uncertainity, fig.show='hold', fig.align='center'}
+mi <- MIPCA(airquality, scale = TRUE, ncp = 2)
+plot.MIPCA(mi, choice = "var")
+plot.MIPCA(mi, choice = "dim")
+```
 
 
 
