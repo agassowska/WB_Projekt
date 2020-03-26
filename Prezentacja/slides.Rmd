@@ -19,6 +19,11 @@ options(Encoding="UTF-8")
 ```  
 
 ## Zbiór danych airquality
+```{r data_vis}
+visdat::vis_dat(airquality, palette = 'cb_safe')
+```  
+
+## Zbiór danych airquality
 ```{r missing_data_vis_1}
 summary(aggr(airquality, sortVar=TRUE))$combinations
 ```  
@@ -56,16 +61,14 @@ grid.arrange(p1, p2, ncol = 2)
 * <font size="4"><span style = "color:red;"> oparty na metodach redukcji wymiarów </span>, pakiet missMDA z powodzeniem radzi sobie z dużymi, złożonymi zbiorami danych,</font>    
 * <font size="4">może być stosowany do imputacji zmiennych zarówno numerycznych jak i kategorycznych.</font>  
 
-## Ten slajd jest roboczy - tylko dla nas (chyba :) )  
+##   
 * <font size="4"><span style = "color:red;">Analiza czynnikowa</span>  
 Metoda statystyczna, której celem jest opisanie zależności między zaobserwowanymi, skorelowanymi zmiennymi przy pomocy możliwie mniejszej liczby zmiennych, które są wzajemnie nieskorelowane.</font>  
 * <font size="4"><span style = "color:red;">Analiza głównych składowych</span>  
 Zbiór danych składający się z N obserwacji, z których każda obejmuje K zmiennych, można interpretować jako chmurę N punktów w przestrzeni K-wymiarowej. Celem PCA jest taki obrót układu współrzędnych, aby maksymalizować w pierwszej kolejności wariancję pierwszej współrzędnej, następnie wariancję drugiej współrzędnej itd.. W ten sposób konstruowana jest nowa przestrzeń obserwacji, w której najwięcej zmienności wyjaśniają początkowe czynniki.</font>  
 
 
-## 1. Oszacowanie liczby wymiarów    
-
-##  
+## 1. Oszacowanie liczby wymiarów   
 
 <font size="4"> **1.1.** Dla kroswalidacji leave-one-out (loo) każda komórka ramki danych jest alternatywnie usuwana i prognozowana za pomocą modelu PCA. Zwracana jest liczba wymiarów, która prowadzi do najmniejszego średniego błędu prognozowania (MSEP).</font>
 
@@ -111,6 +114,12 @@ res.comp$completeObs[5:10, ]
 # Brak braków
 imp <- as.data.frame(res.comp)
 matrixplot(imp)
+```   
+
+## Wizualizacja danych imputowanych  
+```{r imputed_data_vis3}
+# Brak braków
+vis_miss(imp)
 ```   
 
 ## Wizualizacja danych imputowanych  
