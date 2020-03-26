@@ -1,0 +1,126 @@
+---
+title: "Pakiet missMDA"
+author: Ada Gąssowska, Elżbieta Jowik, Mateusz Grzyb
+date: March 26, 2020
+output: ioslides_presentation
+---
+
+```{r packages, include=FALSE, message=FALSE}
+# Packages
+library(OpenML)
+library(naniar)
+library(VIM)
+library(missMDA)
+library(FactoMineR)
+library(ggplot2)
+library(gridExtra)
+
+options(Encoding="UTF-8")
+```  
+
+## Zbiór danych airquality
+```{r missing_data_vis_1}
+summary(aggr(airquality, sortVar=TRUE))$combinations
+```  
+
+## Zbiór danych airquality
+```{r missing_data_vis_2, fig.height=5.5}
+marginplot(airquality[,c("Ozone","Solar.R")]) + theme_dark()
+```  
+
+
+## Zbiór danych airquality
+```{r missing_data_vis_3, include=FALSE}
+p1 <- ggplot(bind_shadow(airquality),
+        aes(x = Temp,
+            fill = Ozone_NA)) + 
+  geom_density(alpha=0.5)
+  
+
+p2 <- ggplot(bind_shadow(airquality),
+        aes(x = Temp,
+            fill = Solar.R_NA)) + 
+  geom_density(alpha=0.5)
+```  
+
+```{r missing_data_vis_3_plots, fig.height = 4}
+grid.arrange(p1, p2, ncol = 2)
+```  
+
+## Pakiet missMDA  
+
+* <font size="4">umożliwia obsługę brakujących wartości w <span style = "color:red;">metodach czynnikowych</span>  
+(PCA, CA, MCA, MFA, FAMD),</font>  
+* <font size="4">imputuje brakujące wartości w taki sposób, że <span style = "color:red;">przypisane wartości nie mają wag</span>.  
+(tj. nie mają wpływu na wyniki; metody są wykonywane tylko z zaobserwowanymi wartościami),</font>  
+* <font size="4"><span style = "color:red;"> oparty na metodach redukcji wymiarów </span>, pakiet missMDA z powodzeniem radzi sobie z dużymi, złożonymi zbiorami danych,</font>    
+* <font size="4">może być stosowany do imputacji zmiennych zarówno numerycznych jak i kategorycznych.</font>  
+
+## Ten slajd jest roboczy - tylko dla nas (chyba :) )  
+* <font size="4"><span style = "color:red;">Analiza czynnikowa</span>  
+Metoda statystyczna, której celem jest opisanie zależności między zaobserwowanymi, skorelowanymi zmiennymi przy pomocy możliwie mniejszej liczby zmiennych, które są wzajemnie nieskorelowane.</font>  
+* <font size="4"><span style = "color:red;">Analiza głównych składowych</span>  
+Zbiór danych składający się z N obserwacji, z których każda obejmuje K zmiennych, można interpretować jako chmurę N punktów w przestrzeni K-wymiarowej. Celem PCA jest taki obrót układu współrzędnych, aby maksymalizować w pierwszej kolejności wariancję pierwszej współrzędnej, następnie wariancję drugiej współrzędnej itd.. W ten sposób konstruowana jest nowa przestrzeń obserwacji, w której najwięcej zmienności wyjaśniają początkowe czynniki.</font>  
+
+
+## 1. Oszacowanie liczby wymiarów    
+
+##  
+
+<font size="4"> **1.1.** Dla kroswalidacji leave-one-out (loo) każda komórka ramki danych jest alternatywnie usuwana i prognozowana za pomocą modelu PCA. Zwracana jest liczba wymiarów, która prowadzi do najmniejszego średniego błędu prognozowania (MSEP).</font>
+
+```{r ncp1, fig.height=3.5, fig.width=5, fig.align='center', cache=TRUE}  
+nb1 <- estim_ncpPCA(airquality, method = 'Regularized', 
+                    verbose = FALSE, method.cv = "loo", ncp.min = 1)
+plot(1:5, nb1$criterion, xlab = "nb dim", ylab = "MSEP")
+title(paste("Result = ", nb1$ncp))
+```  
+
+##  
+
+<font size="4"> **1.2.** Dla kroswalidacyjnej metody Kfold, imputowany jest odsetek pNA brakujących wartości a następnie prognozowany za pomocą modelu PCA przy użyciu od ncp.min do ncp.max wymiarów. Proces ten jest powtarzany nbsim razy. Jak wyżej zwracana jest liczba wymiarów, które prowadzą do najmniejszego MSEP.</font>  
+
+```{r ncp2, fig.height=3.5, fig.width=5, fig.align='center', cache=TRUE}  
+nb2 <- estim_ncpPCA(airquality, method = 'Regularized', pNA = 0.05,
+          method.cv = "Kfold", ncp.min = 1, nbsim = 150, verbose = FALSE)
+plot(1:5, nb2$criterion, xlab = "nb dim", ylab = "MSEP")
+title(paste("Result = ", nb2$ncp))
+```   
+
+##  
+
+<font size="4"> **1.3.** Kryterium kroswalidacji GCV może być postrzegane jako przybliżenie kryterium loo, które zapewnia prosty sposób oszacowania liczby wymiarów bez uciekania się do metod intensywnych obliczeniowo. </font>   
+```{r ncp3, fig.height=3.5, fig.width=5, fig.align='center', cache=TRUE}  
+nb3 <- estim_ncpPCA(airquality, method = 'Regularized', ncp.min = 1,
+                    method.cv = "gcv", verbose = FALSE)
+plot(1:5, nb3$criterion, xlab = "nb dim", ylab = "MSEP")
+title(paste("Result = ", nb3$ncp))
+```   
+
+## Imputacja
+<font size="4">W przypadku wszystkich kryteriów kroswalidaji brakujące dane są imputowane przy użyciu funkcji imputePCA, czyli za pomocą uregulowanego algorytmu iteracyjnego PCA (method="Regularized") lub iteracyjnego algorytmu PCA (method="EM"). Uregulowana wersja jest bardziej odpowiednia, gdy istnieje wiele brakujących wartości w zestawie danych, aby uniknąć problemu przeuczenia.</font>  
+```{r imputation}
+res.comp <- imputePCA(airquality, ncp = nb3$ncp) 
+
+# Dane po imputacji
+res.comp$completeObs[5:10, ]
+```  
+
+## Wizualizacja danych imputowanych  
+```{r imputed_data_vis1}
+# Brak braków
+imp <- as.data.frame(res.comp)
+matrixplot(imp)
+```   
+
+## Wizualizacja danych imputowanych  
+```{r imputed_data_vis2}
+res.pca <- PCA(res.comp$completeObs, graph = FALSE)
+plot(res.pca, choix="var")
+```     
+
+
+
+
+
+
