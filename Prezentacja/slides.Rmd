@@ -98,13 +98,39 @@ title(paste("Result = ", nb3$ncp))
 ```   
 
 ## Imputacja
-<font size="4">W przypadku wszystkich kryteriów kroswalidaji brakujące dane są imputowane przy użyciu funkcji imputePCA, czyli za pomocą uregulowanego algorytmu iteracyjnego PCA (method="Regularized") lub iteracyjnego algorytmu PCA (method="EM"). Uregulowana wersja jest bardziej odpowiednia, gdy istnieje wiele brakujących wartości w zestawie danych, aby uniknąć problemu przeuczenia.</font>  
-```{r imputation}
-res.comp <- imputePCA(airquality, ncp = nb3$ncp) 
+
+## Metoda ustandaryzowana  
+<font size = "4"> Standaryzowany iteracyjny algorytm PCA w pierwszym kroku polega na imputowaniu brakujących wartości wartościami początkowymi, takimi jak średnia zmiennej. Jeśli parametr seed ustawiony jest na określoną wartość, przeprowadzana jest losowa inicjalizacja: wartości początkowe są przypisane z rozkładu gaussowskiego ze średnią i odchyleniem standardowym obliczonym na podstawie zaobserwowanych wartości.  
+Uwaga: można zdefiniować inną losową inicjalizację. W takiej sytuacji zachowane jest rozwiązanie dające najmniejszy błąd średniokwadratowy.    
+
+Drugim krokiem (standaryzowanego) iteracyjnego algorytmu PCA jest wykonanie PCA na skompletowanym zbiorze danych. Następnie przypisuje brakujące wartości za pomocą (uregulowanych) wzorów rekonstrukcyjnych rzędu ncp. Te etapy oszacowania parametrów za pomocą PCA i przypisania brakujących wartości z rozkładu rozmalnego są powtarzane iteracyjnie aż do uzyskania zbieżności.   
+Zalecane jest korzystanie ze znormalizowanej wersji algorytmu, aby uniknąć problemów z nadmiernym dopasowaniem, które są bardzo częste, gdy w danych  brakuje wielu wartości. </font>   
+
+## Metoda ustandaryzowana  
+```{r imputation1}
+res.comp <- imputePCA(airquality, ncp = nb3$ncp, 
+                      method = "Regularized") 
 
 # Dane po imputacji
 res.comp$completeObs[5:10, ]
 ```  
+
+## Metoda EM  
+
+<font size = "4"> Metoda maksymalizacji wartości oczekiwanej to metoda estymacji parametrów modelu probabilistycznego ze zmiennymi ukrytymi polegająca na iteracyjnej maksymalizacji funkcji wiarygodności. Każda iteracja algorytmu EM składa się z dwóch kroków:  
+1. <span style = "color:red;"> **kroku E** </span>, dla aktualnego układu parametrów rozkładu wyestymuj prawdopodobieństwa przynależenia do grup/wartości,  
+2. <span style = "color:red;"> **kroku M** </span>, zmiana aktualnych parametrów rozkładu na takie, które prowadzą do modelu bardziej zgodnego z danymi.  
+Kroki wykonywane są tak długo, aż pomiędzy kolejnymi przebiegami nie dochodzi do zauważalnej poprawy. </font>   
+
+## Metoda EM  
+
+```{r imputation2}
+res.comp <- imputePCA(airquality, ncp = nb3$ncp, method = "EM") 
+
+# Dane po imputacji
+res.comp$completeObs[5:10, ]
+```  
+
 
 ## Wizualizacja danych imputowanych  
 ```{r imputed_data_vis1}
