@@ -1,11 +1,11 @@
 ---
 title: "Pakiet missMDA"
-author: Ada Gąssowska, Elżbieta Jowik, Mateusz Grzyb
-date: March 26, 2020
+author: Ada Gąssowska, Mateusz Grzyb, Elżbieta Jowik
+date: March 31, 2020
 output: ioslides_presentation
 ---
 
-```{r packages, include=FALSE, message=FALSE}
+```{r packages, echo=FALSE, message=FALSE}
 # Packages
 library(OpenML)
 library(naniar)
@@ -13,41 +13,13 @@ library(VIM)
 library(missMDA)
 library(FactoMineR)
 library(ggplot2)
-library(gridExtra)
+library(cowplot)
 
+data(vnf)
 options(Encoding="UTF-8")
 ```  
 
-## Zbiór danych airquality
-```{r missing_data_vis_1}
-summary(aggr(airquality, sortVar=TRUE))$combinations
-```  
-
-## Zbiór danych airquality
-```{r missing_data_vis_2, fig.height=5.5}
-marginplot(airquality[,c("Ozone","Solar.R")]) + theme_dark()
-```  
-
-
-## Zbiór danych airquality
-```{r missing_data_vis_3, include=FALSE}
-p1 <- ggplot(bind_shadow(airquality),
-        aes(x = Temp,
-            fill = Ozone_NA)) + 
-  geom_density(alpha=0.5)
-  
-
-p2 <- ggplot(bind_shadow(airquality),
-        aes(x = Temp,
-            fill = Solar.R_NA)) + 
-  geom_density(alpha=0.5)
-```  
-
-```{r missing_data_vis_3_plots, fig.height = 4}
-grid.arrange(p1, p2, ncol = 2)
-```  
-
-## Pakiet missMDA  
+## Pakiet missMDA
 
 * <font size="4">umożliwia obsługę brakujących wartości w <span style = "color:red;">metodach czynnikowych</span>  
 (PCA, CA, MCA, MFA, FAMD),</font>  
@@ -56,44 +28,78 @@ grid.arrange(p1, p2, ncol = 2)
 * <font size="4"><span style = "color:red;"> oparty na metodach redukcji wymiarów </span>, pakiet missMDA z powodzeniem radzi sobie z dużymi, złożonymi zbiorami danych,</font>    
 * <font size="4">może być stosowany do imputacji zmiennych zarówno numerycznych jak i kategorycznych.</font>  
 
-##  
+## Objaśnienia  
+
 * <font size="4"><span style = "color:red;">Analiza czynnikowa</span>  
 Metoda statystyczna, której celem jest opisanie zależności między zaobserwowanymi, skorelowanymi zmiennymi przy pomocy możliwie mniejszej liczby zmiennych, które są wzajemnie nieskorelowane.</font>  
 * <font size="4"><span style = "color:red;">Analiza głównych składowych</span>  
 Zbiór danych składający się z N obserwacji, z których każda obejmuje K zmiennych, można interpretować jako chmurę N punktów w przestrzeni K-wymiarowej. Celem PCA jest taki obrót układu współrzędnych, aby maksymalizować w pierwszej kolejności wariancję pierwszej współrzędnej, następnie wariancję drugiej współrzędnej itd.. W ten sposób konstruowana jest nowa przestrzeń obserwacji, w której najwięcej zmienności wyjaśniają początkowe czynniki.</font>  
 
+## Zbiór danych airquality
+```{r missing_data_vis_1, dev.args=list(bg='transparent'), fig.align='center', echo=FALSE, results='hide'}
+summary(aggr(airquality, sortVar=TRUE))$combinations
+```  
 
-## 1. Metoda PCA    
+## Zbiór danych airquality (CZY TO POTRZEBNE?)
+```{r missing_data_vis_2, dev.args=list(bg='transparent'), fig.align='center', echo=FALSE, results='hide'}
+marginplot(airquality[,c("Ozone","Solar.R")]) + 
+  theme_dark()
+```  
+
+## Zbiór danych airquality (CZY TO POTRZEBNE?)
+```{r missing_data_vis_3, include=FALSE}
+p1 <- ggplot(bind_shadow(airquality),
+        aes(x=Temp,
+            fill=Ozone_NA)) + 
+  geom_density(alpha=0.5) +
+  theme(
+    plot.background = element_rect(fill=NA, color = NA)
+  )
+  
+p2 <- ggplot(bind_shadow(airquality),
+        aes(x=Temp,
+            fill=Solar.R_NA)) + 
+  geom_density(alpha=0.5) +
+  theme(
+    plot.background = element_rect(fill=NA, color = NA)
+  )
+```  
+
+```{r missing_data_vis_3_plots, dev.args=list(bg='transparent'), fig.align='center', echo=FALSE}
+plot_grid(p1, p2, ncol=2)
+```  
+
+## Metoda PCA    
 
 ##  
 
-<font size="4"> **1.1.** Dla kroswalidacji leave-one-out (loo) każda komórka ramki danych jest alternatywnie usuwana i prognozowana za pomocą modelu PCA. Zwracana jest liczba wymiarów, która prowadzi do najmniejszego średniego błędu prognozowania (MSEP).</font>
+<font size="4"> **1.** Dla kroswalidacji leave-one-out (loo) każda komórka ramki danych jest alternatywnie usuwana i prognozowana za pomocą modelu PCA. Zwracana jest liczba wymiarów, która prowadzi do najmniejszego średniego błędu prognozowania (MSEP).</font>
 
-```{r ncp1, fig.height=3.5, fig.width=5, fig.align='center', cache=TRUE}  
-nb1 <- estim_ncpPCA(airquality, method = 'Regularized', 
-                    verbose = FALSE, method.cv = "loo", ncp.min = 1)
-plot(1:5, nb1$criterion, xlab = "nb dim", ylab = "MSEP")
+```{r ncp1, dev.args=list(bg='transparent'), fig.height=3.3, fig.align='center', cache=TRUE}  
+nb1 <- estim_ncpPCA(airquality, method='Regularized', 
+                    verbose=FALSE, method.cv="loo", ncp.min=1)
+plot(1:5, nb1$criterion, xlab="nb dim", ylab="MSEP")
 title(paste("Result = ", nb1$ncp))
 ```  
 
 ##  
 
-<font size="4"> **1.2.** Dla kroswalidacyjnej metody Kfold, imputowany jest odsetek pNA brakujących wartości a następnie prognozowany za pomocą modelu PCA przy użyciu od ncp.min do ncp.max wymiarów. Proces ten jest powtarzany nbsim razy. Jak wyżej zwracana jest liczba wymiarów, które prowadzą do najmniejszego MSEP.</font>  
+<font size="4"> **2.** Dla kroswalidacyjnej metody Kfold, imputowany jest odsetek pNA brakujących wartości a następnie prognozowany za pomocą modelu PCA przy użyciu od ncp.min do ncp.max wymiarów. Proces ten jest powtarzany nbsim razy. Jak wyżej zwracana jest liczba wymiarów, które prowadzą do najmniejszego MSEP.</font>  
 
-```{r ncp2, fig.height=3.5, fig.width=5, fig.align='center', cache=TRUE}  
-nb2 <- estim_ncpPCA(airquality, method = 'Regularized', pNA = 0.05,
-          method.cv = "Kfold", ncp.min = 1, nbsim = 150, verbose = FALSE)
-plot(1:5, nb2$criterion, xlab = "nb dim", ylab = "MSEP")
+```{r ncp2, dev.args=list(bg='transparent'), fig.height=3.3, fig.align='center', cache=TRUE}  
+nb2 <- estim_ncpPCA(airquality, method='Regularized', pNA=0.05,
+          method.cv="Kfold", ncp.min=1, nbsim=150, verbose=FALSE)
+plot(1:5, nb2$criterion, xlab="nb dim", ylab="MSEP")
 title(paste("Result = ", nb2$ncp))
 ```   
 
 ##  
 
-<font size="4"> **1.3.** Kryterium kroswalidacji GCV może być postrzegane jako przybliżenie kryterium loo, które zapewnia prosty sposób oszacowania liczby wymiarów bez uciekania się do metod intensywnych obliczeniowo. </font>   
-```{r ncp3, fig.height=3.5, fig.width=5, fig.align='center', cache=TRUE}  
-nb3 <- estim_ncpPCA(airquality, method = 'Regularized', ncp.min = 1,
-                    method.cv = "gcv", verbose = FALSE)
-plot(1:5, nb3$criterion, xlab = "nb dim", ylab = "MSEP")
+<font size="4"> **3.** Kryterium kroswalidacji GCV może być postrzegane jako przybliżenie kryterium loo, które zapewnia prosty sposób oszacowania liczby wymiarów bez uciekania się do metod intensywnych obliczeniowo. </font>   
+```{r ncp3, dev.args=list(bg='transparent'), fig.height=3.5, fig.align='center', cache=TRUE}  
+nb3 <- estim_ncpPCA(airquality, method='Regularized', ncp.min=1,
+                    method.cv="gcv", verbose=FALSE)
+plot(1:5, nb3$criterion, xlab="nb dim", ylab="MSEP")
 title(paste("Result = ", nb3$ncp))
 ```   
 
@@ -108,11 +114,11 @@ Zalecane jest korzystanie ze znormalizowanej wersji algorytmu, aby uniknąć pro
 
 ## Metoda ustandaryzowana  
 ```{r imputation1}
-res.comp <- imputePCA(airquality, ncp = nb3$ncp, 
-                      method = "Regularized") 
+res.comp <- imputePCA(airquality, ncp=nb3$ncp, 
+                      method="Regularized") 
 
 # Dane po imputacji
-res.comp$completeObs[5:10, ]
+head(res.comp$completeObs)
 ```  
 
 ## Metoda EM  
@@ -125,33 +131,121 @@ Kroki wykonywane są tak długo, aż pomiędzy kolejnymi przebiegami nie dochodz
 ## Metoda EM  
 
 ```{r imputation2}
-res.comp <- imputePCA(airquality, ncp = nb3$ncp, method = "EM") 
+res.comp <- imputePCA(airquality, ncp=nb3$ncp, method="EM") 
 
 # Dane po imputacji
-res.comp$completeObs[5:10, ]
+head(res.comp$completeObs)
 ```  
 
-
-## Wizualizacja danych imputowanych  
-```{r imputed_data_vis1}
-# Brak braków
+## Wizualizacja danych imputowanych (DO POPRAWY)
+```{r imputed_data_vis1, dev.args=list(bg='transparent'), fig.height=4, fig.align='center'}
 imp <- as.data.frame(res.comp)
 matrixplot(imp)
 ```   
 
-## Wizualizacja danych imputowanych  
-```{r imputed_data_vis2}
-res.pca <- PCA(res.comp$completeObs, graph = FALSE)
-plot(res.pca, choix="var")
+## Wynik algorytmu PCA 
+```{r imputed_data_vis2, dev.args=list(bg='transparent'), fig.height=4, fig.align='center'}
+res.pca <- PCA(res.comp$completeObs, graph=FALSE)
+plot.PCA(res.pca, choix="var", graph.type='ggplot') +
+  theme(plot.background=element_rect(fill=NA, color=NA))
 ```     
 
 ## Wizualizacja niepewności
-```{r uncert1, fig.align="center", fig.show="hold"}
+```{r uncert1, dev.args=list(bg='transparent'), fig.align="center", fig.show="hold"}
 res.mipca <- MIPCA(airquality, scale = TRUE, ncp = 2)
 plot.MIPCA(res.mipca, 'var')
 ``` 
 
 ## Wizualizacja niepewności
-```{r uncert2, fig.align="center", fig.show="hold"}
-plot.MIPCA(res.mipca, choice = 'dim')
+```{r uncert2, dev.args=list(bg='transparent'), fig.align="center", fig.show="hold"}
+plot.MIPCA(res.mipca, choice='dim')
 ``` 
+
+## Zbiór danych vnf
+
+```{r missing_data_vis_4, dev.args=list(bg='transparent'), fig.align='center', echo=FALSE, results='hide'}
+summary(aggr(vnf, sortVar=TRUE))$combinations
+```  
+
+## Metoda MCA
+
+<font size = "4">Metoda MCA stanowi odpowiednik metody PCA dla zmiennych <span style = "color:red;">kategorycznych</span>. Polega ona na zakodowaniu danych z brakami w postaci <span style = "color:red;">complete disjunctive table</span>. Brakujące dane inicjalizowane są proporcjami kategorii, dla każdej kategorii, przy użyciu niebrakujacych wartości (proces ten bywa określany jako "missing fuzzy average method"). Następnie stosowana jest omówiona już metoda PCA. Wynikowa ramka, w miejsach pierwotnych braków, zawiera wartości z przedziału [0, 1], które mogą być interpretowane jako prawdopodobieństwa przynależności do danej kategorii.</font>  
+
+## Przypadek zmiennych ciągłych (PCA)
+
+|      | C1 | C2 |
+|------|----|----|
+| Obs1 | 1 | 10  |
+| Obs2 | 2  | 12  |
+| Obs3 | 7  | 1  |
+| Obs4 | 8  | 3  |
+| Obs5 | ? 4.5 ?  | 13 |
+
+## Przypadek zmiennych kategorycznych (MCA)
+
+Data table:
+ 
+|      | Q1 | Q2 |
+|------|----|----|
+| Obs1 | A  | C  |
+| Obs2 | A  | D  |
+| Obs3 | B  | E  |
+| Obs4 | A  | D  |
+| Obs5 | ?  | D  |
+
+## Przypadek zmiennych kategorycznych (MCA)
+
+Complete disjunctive table:
+
+|      | Q1-A | Q1-B | Q2-C | Q2-D | Q2-E |
+|------|------|------|------|------|------|
+| Obs1 | 1    | 0    | 1    | 0    | 0    |
+| Obs2 | 1    | 1    | 0    | 1    | 0    |
+| Obs3 | 0    | 1    | 0    | 0    | 1    |
+| Obs4 | 1    | 0    | 0    | 1    | 0    |
+| Obs5 | ? 0.75 ? | ? 0.25 ? | 0    | 1    | 0    |
+
+## Imputacja
+
+```{r ncp4, dev.args=list(bg='transparent'), fig.height=3.3, fig.align='center', cache=TRUE}  
+nb4 <- estim_ncpMCA(vnf, method='Regularized', 
+                    verbose=FALSE, method.cv="Kfold")
+plot(1:5, nb1$criterion, xlab="nb dim", ylab="MSEP")
+title(paste("Result = ", nb4$ncp))
+```  
+
+## Imputacja
+
+```{r imputation3}
+res.comp <- imputeMCA(vnf, ncp=nb4$ncp, 
+                      method="Regularized") 
+
+# Dane po imputacji
+res.comp$tab.disj[25:30, 1:6]
+```
+
+## Imputacja
+```{r imputation4}
+res.comp$completeObs[25:30, 1:2]
+```
+
+## Wizualizacja danych imputowanych (DO WSTAWIENIA)
+
+## Wynik algorytmu MCA 
+```{r imputed_data_vis3, dev.args=list(bg='transparent'), fig.height=4, fig.align='center'}
+res.pca <- MCA(res.comp$completeObs, graph=FALSE)
+plot.MCA(res.pca, choix="var", graph.type='ggplot') +
+  theme(plot.background=element_rect(fill=NA, color=NA))
+```     
+
+## Wizualizacja niepewności
+```{r uncert3, dev.args=list(bg='transparent'), fig.align="center", fig.show="hold", cache=T}
+res.mimca <- MIMCA(vnf, ncp=nb4$ncp)
+plot.MIMCA(res.mimca, choice='dim')
+``` 
+
+## TUTAJ ADA
+
+## Przystępne wytłumaczenie metody
+
+https://www.youtube.com/watch?v=FgakZw6K1QQ&t=710s
