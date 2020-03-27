@@ -5,7 +5,7 @@ date: March 31, 2020
 output: ioslides_presentation
 ---
 
-```{r packages, echo=FALSE, message=FALSE}
+```{r packages, echo=FALSE, message=FALSE, warning=FALSE}
 # Packages
 library(OpenML)
 library(naniar)
@@ -224,6 +224,104 @@ plot.MIMCA(res.mimca, choice='dim')
 ``` 
 
 ## TUTAJ ADA
+## Zbiór danych wine
+
+```{r wine_dataset}
+
+data("wine")
+df <- wine[, c(1, 2, 16, 22, 29, 28, 30,31)]
+rownames(df) <- c(1:nrow(df))
+#usuwanie danych aby były braki
+x <- sample(nrow(df), 3)
+y <- sample(nrow(df), 3)
+df$Label[x] <- NA
+df$Harmony[y] <- NA
+
+
+```
+## Wizualizacja danych
+
+
+
+```{r summary_wine}
+summary(aggr(df, sortVar = TRUE))$combinations
+
+
+```
+## Metoda FAMD
+
+<font size = "4"> Metoda FAMD (factor analysis for mixed data) to "połączenie" dwóch omawianych wcześniej metod PCA i MCA. Z grubsza można by powiedzieć, że FAMD działa jak PCA dla danych ciągłych i jak MCA dla danych kategorycznych. Zmienne kategoryczne są dyskretyzowane, aby miała sens macierz relacji dla wszystkich zmiennych. 
+</font>
+
+## Estymacja ncp dla FAMD
+
+```{r ncp5, dev.args=list(bg='transparent'), fig.height=3.3, fig.align='center', cache=TRUE}  
+#nb5 <- estim_ncpFAMD(wine, method='Regularized', 
+                    #verbose=FALSE, method.cv="Kfold")
+#plot(1:5, nb1$criterion, xlab="nb dim", ylab="MSEP")
+#title(paste("Result = ", nb4$ncp))
+```  
+
+
+## Imputacja
+
+```{r imputation5}
+res.comp <- imputeFAMD(df, ncp=2, 
+                      method="Regularized") 
+# Dane po imputacji
+res.comp$tab.disj[1:7,c(1:6,10)]
+```
+
+## Imputacja
+```{r imputation6}
+res.comp$completeObs[1:7, ]
+```
+
+## Wizualizacja danych imputowanych (DO WSTAWIENIA)
+
+
+
+## Wynik algorytmu FAMD 
+```{r imputed_data_vis4, dev.args=list(bg='transparent'), fig.height=4, fig.align='center'}
+res.famd <- FAMD(res.comp$completeObs, graph=FALSE)
+plot.FAMD(res.famd, choix="var", graph.type='ggplot') +
+  theme(plot.background=element_rect(fill=NA, color=NA))
+```     
+
+## Mapa danych kategorycznych
+```{r uncert4, dev.args=list(bg='transparent'), fig.align="center", fig.show="hold", cache=T}
+plot(res.famd, choix = "ind")
+``` 
+
+
+## Graf dla danych numerycznych
+
+
+```{r}
+plot(res.famd, choix = "quanti")
+
+```
+
+## Metoda MFA
+
+tu opis
+
+## IMPUTACJA
+
+
+
+```{r}
+res.comp <- imputeMFA(df, group = c(2,6), type=c("n","s"))
+# Dane po imputacji
+res.comp$tab.disj[1:10,c(1:7,10)]
+
+```
+
+
+## Imputacja
+```{r imputation7}
+res.comp$completeObs[1:7, ]
+```
 
 ## Przystępne wytłumaczenie metody
 
