@@ -40,34 +40,6 @@ Zbiór danych składający się z N obserwacji, z których każda obejmuje K zmi
 summary(aggr(airquality, sortVar=TRUE))$combinations
 ```  
 
-## Zbiór danych airquality (CZY TO POTRZEBNE?)
-```{r missing_data_vis_2, dev.args=list(bg='transparent'), fig.align='center', echo=FALSE, results='hide'}
-marginplot(airquality[,c("Ozone","Solar.R")]) + 
-  theme_dark()
-```  
-
-## Zbiór danych airquality (CZY TO POTRZEBNE?)
-```{r missing_data_vis_3, include=FALSE}
-p1 <- ggplot(bind_shadow(airquality),
-        aes(x=Temp,
-            fill=Ozone_NA)) + 
-  geom_density(alpha=0.5) +
-  theme(
-    plot.background = element_rect(fill=NA, color = NA)
-  )
-  
-p2 <- ggplot(bind_shadow(airquality),
-        aes(x=Temp,
-            fill=Solar.R_NA)) + 
-  geom_density(alpha=0.5) +
-  theme(
-    plot.background = element_rect(fill=NA, color = NA)
-  )
-```  
-
-```{r missing_data_vis_3_plots, dev.args=list(bg='transparent'), fig.align='center', echo=FALSE}
-plot_grid(p1, p2, ncol=2)
-```  
 
 ## Metoda PCA    
 
@@ -137,18 +109,25 @@ res.comp <- imputePCA(airquality, ncp=nb3$ncp, method="EM")
 head(res.comp$completeObs)
 ```  
 
-## Wizualizacja danych imputowanych (DO POPRAWY)
-```{r imputed_data_vis1, dev.args=list(bg='transparent'), fig.height=4, fig.align='center'}
-imp <- as.data.frame(res.comp)
-matrixplot(imp)
-```   
-
 ## Wynik algorytmu PCA 
 ```{r imputed_data_vis2, dev.args=list(bg='transparent'), fig.height=4, fig.align='center'}
 res.pca <- PCA(res.comp$completeObs, graph=FALSE)
 plot.PCA(res.pca, choix="var", graph.type='ggplot') +
   theme(plot.background=element_rect(fill=NA, color=NA))
-```     
+```      
+
+## Interpretacja wykresu  
+
+<font size="4">Rozważane wymiary są kombinacjami liniowymi zmiennych.   
+Punkty zaczepienia poszczególnych wektorów stanowią współczynniki w kombinacjach liniowych dla danej zmiennej odpowiednio w 1. i 2. nowo utworzonym wymiarze.  
+Wykres pokazuje relacje między wszystkimi zmiennymi.  
+Można go interpretować następująco:</font>   
+* <font size="4">Dodatnio skorelowane zmienne są grupowane razem.</font>   
+* <font size="4">Zmienne ujemnie skorelowane są umieszczone po przeciwnych stronach początku wykresu (przeciwne ćwiartki).</font>   
+* <font size="4">Długość wektora mierzy jakość zmiennych. Im dłuższy wektor, tym zmienna bardziej reprezentatywna.</font>  
+
+<font size="4">Z sześciu wymiarów (wektory) mamy dwa (osie). Współrzędne każdego punktu w nowej przestrzeni można wyliczyć z kombinacji liniowej. Szukamy takiej kombinacji liniowej by zmaksymalizować wariancję w nowej przestrzeni. Procenty widoczne na osiach, to procenty wariancji danych, jakie są uwzględnione w danym wymiarze. </font> 
+
 
 ## Wizualizacja niepewności
 ```{r uncert1, dev.args=list(bg='transparent'), fig.align="center", fig.show="hold"}
