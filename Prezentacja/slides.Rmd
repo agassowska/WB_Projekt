@@ -108,7 +108,7 @@ head(res.comp$completeObs)
 ## Metoda EM  
 
 <font size = "4"> Metoda maksymalizacji wartości oczekiwanej to metoda estymacji parametrów modelu probabilistycznego ze zmiennymi ukrytymi polegająca na iteracyjnej maksymalizacji funkcji wiarygodności. Każda iteracja algorytmu EM składa się z dwóch kroków:  
-1. <span style = "color:red;"> **kroku E** </span>, dla aktualnego układu parametrów rozkładu wyestymuj prawdopodobieństwa przynależenia do grup/wartości, które zmaksymalizują wartość funkcji wiarygodności,  
+1. <span style = "color:red;"> **kroku E** </span>, dla aktualnego układu parametrów rozkładu wyestymuj wartości, które zmaksymalizują wartość funkcji wiarygodności,  
 2. <span style = "color:red;"> **kroku M** </span>, zmiana aktualnych parametrów rozkładu na takie, które prowadzą do modelu bardziej zgodnego z danymi.  
 Kroki wykonywane są tak długo, aż pomiędzy kolejnymi przebiegami nie dochodzi do zauważalnej poprawy. </font>   
 
