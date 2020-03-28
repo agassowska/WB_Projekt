@@ -35,10 +35,6 @@ Metoda statystyczna, której celem jest opisanie zależności między zaobserwow
 * <font size="4"><span style = "color:red;">Analiza głównych składowych</span>  
 Zbiór danych składający się z N obserwacji, z których każda obejmuje K zmiennych, można interpretować jako chmurę N punktów w przestrzeni K-wymiarowej. Celem PCA jest taki obrót układu współrzędnych, aby maksymalizować w pierwszej kolejności wariancję pierwszej współrzędnej, następnie wariancję drugiej współrzędnej itd.. W ten sposób konstruowana jest nowa przestrzeń obserwacji, w której najwięcej zmienności wyjaśniają początkowe czynniki.</font>  
 
-## Zbiór danych airquality
-```{r missing_data_vis_1, dev.args=list(bg='transparent'), fig.align='center', echo=FALSE, results='hide'}
-summary(aggr(airquality, sortVar=TRUE))$combinations
-```  
 
 
 ## Algorytm PCA    
@@ -51,7 +47,13 @@ summary(aggr(airquality, sortVar=TRUE))$combinations
 | Gene4 | 5    | 7    | 2    | 4    | 7    |  
 
 ## Algorytm PCA  
-![](img.png)
+![](img.png)    
+
+## Zbiór danych airquality
+```{r missing_data_vis_1, dev.args=list(bg='transparent'), fig.align='center', echo=FALSE, results='hide'}
+summary(aggr(airquality, sortVar=TRUE))$combinations
+```  
+
 
 ##   
 
