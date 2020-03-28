@@ -41,16 +41,19 @@ summary(aggr(airquality, sortVar=TRUE))$combinations
 ```  
 
 
-## Metoda PCA    
+## Algorytm PCA    
 
 |      | Mouse1 | Mouse2 | Mouse3 | Mouse4 | Mouse5 |
 |------|------|------|------|------|------|
 | Gene1 | 10    | 11    | 3    | 2    | 2    |
 | Gene2 | 6    | 4    | 3    | 2.8    | 3    |
 | Gene3 | 12    | 9    | 2.5    | 1.3    | 2    |
-| Gene4 | 5    | 7    | 2    | 4    | 7    |
+| Gene4 | 5    | 7    | 2    | 4    | 7    |  
 
-##  
+## Algorytm PCA  
+![](img.png)
+
+##   
 
 <font size="4"> **1.** Dla kroswalidacji leave-one-out (loo) każda komórka ramki danych jest alternatywnie usuwana i prognozowana za pomocą modelu PCA. Zwracana jest liczba wymiarów, która prowadzi do najmniejszego średniego błędu prognozowania (MSEP).</font>
 
