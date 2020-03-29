@@ -265,7 +265,9 @@ summary(aggr(df, sortVar = TRUE))$combinations
 ```
 ## Metoda FAMD
 
-<font size = "4"> Metoda FAMD (factor analysis for mixed data) to "połączenie" dwóch omawianych wcześniej metod PCA i MCA. Z grubsza można by powiedzieć, że FAMD działa jak PCA dla danych ciągłych i jak MCA dla danych kategorycznych. Zmienne kategoryczne są dyskretyzowane, aby miała sens macierz relacji dla wszystkich zmiennych. 
+<font size = "4"> Metoda FAMD (factor analysis for mixed data) to "połączenie" dwóch omawianych wcześniej metod PCA i MCA. Z grubsza można by powiedzieć, że FAMD działa jak PCA dla danych ciągłych i jak MCA dla danych kategorycznych. Zmienne kategoryczne są dyskretyzowane, aby miała sens macierz relacji dla wszystkich zmiennych.  
+
+
 </font>
 
 ## Estymacja ncp dla FAMD
@@ -319,14 +321,16 @@ plot(res.famd, choix = "quanti")
 
 ## Metoda MFA
 
-tu opis
+MFA (multiple factor analysis) - to metoda rozszerzająca opisaną wcześniej metodę FAMD. Funkcja imputeMFA, jak sama nazwa wskazuje, wykorzystuje algorytm MFA do imputacji braków danych. Przyjmuje on dodatkowe argumenty: groups i type, za ich pomocą dzieli zmienne na podane przez nas grupy. Zmienne w grupach są tak przeskalowywane aby każda grupa równomienia wpływała na wynik. W każdej grupie każda zmienna ma taką samą wagę. W ramce mogą być zarówno dane numeryczne jak i kategoryczne, jednak wewnątrz jednej grupy muszą one mieć ten sam typ. 
+
+
 
 ## IMPUTACJA
 
 
 
 ```{r}
-res.comp <- imputeMFA(df, group = c(2,6), type=c("n","s"))
+res.comp <- imputeMFA(df, group = c(2,2,4), type=c("n","s","s"))
 # Dane po imputacji
 res.comp$tab.disj[1:10,c(1:7,10)]
 
@@ -338,6 +342,23 @@ res.comp$tab.disj[1:10,c(1:7,10)]
 res.comp$completeObs[1:7, ]
 ```
 
+## GRAFY DLA MFA
+
+```{r, fig.height=4}
+res.mfa <- MFA(df, 
+               group = c(2,2,4),
+               type = c("n", "s", "s"),
+               graph = TRUE, ncp=2)
+
+```
+
+## NIEPEWNOŚCI
+```{r}
+#
+
+
+
+```
 ## Przystępne wytłumaczenie metody
 
 https://www.youtube.com/watch?v=FgakZw6K1QQ
