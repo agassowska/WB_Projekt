@@ -44,15 +44,33 @@ plot.MIPCA(res.mipca, 'var')
 
 # metoda FAMD
 
-
+#ramka danych w brakach w kolumnie numerycznej i kolumnie kategorycznej
 data("wine")
-df <- wine[, c(1, 2, 16, 22, 29, 28, 30,31)]
-rownames(df) <- c(1:nrow(df))
+wine
+wine<- wine[, c(1, 2, 16, 22, 29, 28, 30,31)] #ograniczamy liczbe kolumn
+wine
 #usuwanie danych aby były braki
-x <- sample(nrow(df), 3)
-y <- sample(nrow(df), 3)
-df$Label[x] <- NA
-df$Harmony[y] <- NA
+x <- sample(nrow(wine), 3)
+y <- sample(nrow(wine), 3)
+wine$Label[x] <- NA
+wine$Harmony[y] <- NA
 
-nb3 <- estim_ncpFAMD(df, ncp.max = 5)
+
+
+#szukanie wymiaru
+nb3 <- estim_ncpFAMD(wine, ncp.min=1, ncp.max = 3) #ncp dla których chcemy sprawdzac - tu od 1 do 3
+
+#imputacja
+
+res.comp3 <- imputeFAMD(wine, ncp=2, 
+                       method="Regularized") 
+
+?imputeFAMD
+
+# metoda MFA 
+
+res.comp4 <- imputeMFA(wine, group=c(2,2,4), 
+                       type=c('n', 's', 's'), ncp=2, graph=FALSE ) #graph=TRUE pokazuje kilka wykresów - przydatne
+ 
+?imputeMFA
 
