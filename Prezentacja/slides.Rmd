@@ -154,7 +154,6 @@ Można go interpretować następująco:</font>
 
 
 ## Wizualizacja niepewności
-
 ```{r uncert1, dev.args=list(bg='transparent'), fig.align="center", fig.show="hold"}
 res.mipca <- MIPCA(airquality, scale = TRUE, ncp = 2)
 plot.MIPCA(res.mipca, 'var')
@@ -250,21 +249,22 @@ res.mimca <- MIMCA(vnf, ncp=nb4$ncp)
 plot.MIMCA(res.mimca, choice='dim')
 ``` 
 
-```{r wine_dataset, echo=F}
+
+## Dane wine
+```{r wine_dataset, echo=FALSE}
 data("wine")
-df <- wine[, c(1, 2, 16, 22, 29, 28, 30,31)]
-rownames(df) <- c(1:nrow(df))
-#usuwanie danych aby były braki
-x <- sample(nrow(df), 3)
-y <- sample(nrow(df), 3)
-df$Label[x] <- NA
-df$Harmony[y] <- NA
+wine <- wine[,c(1,2,16,22,28,29,30,31)]
+
+x <- sample(nrow(wine), 3)
+y <- sample(nrow(wine), 3)
+wine$Label[x] <- NA
+wine$Harmony[y] <- NA
+
 ```
 
-## Zbiór danych vine
 
-```{r summary_wine, dev.args=list(bg='transparent'), fig.align='center', echo=F, results='hide'}
-summary(aggr(df, sortVar = TRUE))$combinations
+```{r summary_wine, dev.args=list(bg='transparent'), fig.align='center'}
+summary(aggr(wine, sortVar = TRUE))$combinations
 ```
 
 ## Metoda FAMD
@@ -280,21 +280,23 @@ Kiedy aktywne dane są typów mieszanych, stosuje się dyskretyzację zmiennych 
 
 ## Estymacja ncp dla FAMD
 
-```{r ncp5, dev.args=list(bg='transparent'), fig.height=3.3, fig.align='center', cache=TRUE}  
-nb5 <- estim_ncpFAMD(wine, method='Regularized', 
-                    verbose=FALSE, method.cv="Kfold")
-plot(1:5, nb1$criterion, xlab="nb dim", ylab="MSEP")
-title(paste("Result = ", nb4$ncp))
-```  
+```{r ncp5, dev.args=list(bg='transparent'), fig.align='center', cache=TRUE, eval=TRUE, results="hide"}  
 
+nb5 <- estim_ncpFAMD(wine, ncp.max = 4, ncp.min=1)
+```  
+```{r plotncp5, fig.width=7}
+plot(1:4, nb5$criterion, xlab="nb dim", ylab="MSEP")
+title(paste("Result = ", nb5$ncp))
+
+```
 
 ## Imputacja
 
 ```{r imputation5}
-res.comp <- imputeFAMD(df, ncp=2, 
+res.comp <- imputeFAMD(wine, nb5$ncp, 
                       method="Regularized") 
 # Dane po imputacji
-res.comp$tab.disj[1:7,c(1:6,10)]
+res.comp$tab.disj[1:10,c(1:6,10)]
 ```
 
 ## Imputacja
@@ -330,32 +332,28 @@ MFA (multiple factor analysis) - to metoda rozszerzająca opisaną wcześniej me
 
 ## IMPUTACJA
 
-```{r, cache=T, eval=F}
-res.comp <- imputeMFA(df, group = c(2,2,4), type=c("n","s","s"))
+```{r, cache=T}
+res.comp <- imputeMFA(wine, group = c(2,2,4), type=c("n","s","s"))
 # Dane po imputacji
 res.comp$tab.disj[1:10,c(1:7,10)]
 ```
 
 ## Imputacja
-```{r imputation7, eval=F}
+```{r imputation7, eval=TRUE}
 res.comp$completeObs[1:7, ]
 ```
 
 ## GRAFY DLA MFA
 
-```{r, dev.args=list(bg='transparent'), fig.height=4, fig.align="center", eval=F}
-res.mfa <- MFA(df, 
+```{r, dev.args=list(bg='transparent'), fig.height=4, fig.align="center"}
+res.mfa <- MFA(wine, 
                group = c(2,2,4),
                type = c("n", "s", "s"),
                graph = TRUE, ncp=2)
 
 ```
 
-## NIEPEWNOŚCI
 
-```{r}
-#
-```
 
 ## Przystępne wytłumaczenie metody
 

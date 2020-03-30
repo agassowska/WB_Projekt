@@ -36,3 +36,23 @@ plot.MIPCA(res.mipca, 'var')
 # Przydatny link:
 ## http://factominer.free.fr/course/missing.html
 ?imputePCA
+
+
+
+
+
+
+# metoda FAMD
+
+
+data("wine")
+df <- wine[, c(1, 2, 16, 22, 29, 28, 30,31)]
+rownames(df) <- c(1:nrow(df))
+#usuwanie danych aby były braki
+x <- sample(nrow(df), 3)
+y <- sample(nrow(df), 3)
+df$Label[x] <- NA
+df$Harmony[y] <- NA
+
+nb3 <- estim_ncpFAMD(df, ncp.max = 5)
+
