@@ -1,42 +1,67 @@
 library(missMDA)
 library(FactoMineR)
+library(VIM)
+library(ggplot2)
 
-# Metoda PCA dla zbioru z brakami
+# Metoda PCA - dla danych liczbowych
+
+# Dane
 data("airquality")
+visdat::vis_dat(airquality)
+summary(aggr(airquality, sortVar=TRUE))$combinations
 
-# IMPUTATION
-## Step 1. estimate the number of dimensions used in the reconstruction formula 
-nb = estim_ncpPCA(airquality, ncp.max=5)
-# Important arguments:
-   # ncp.min
-   # ncp.max
-   # method
-   # method.cv
-   # pNA (for Kfold method.cv)
-   # nbsim (for Kfold method.cv)
+# 1. Oszacowanie liczby wymiarów - metoda estim_ncpPCA
 
-## Step 2. impute the data set with the impute.PCA function using the number 
-##    of dimensions previously calculated
-res.comp = imputePCA(airquality,ncp=2, method = 'Regularized', seed = 123)
-# Important arguments:
-    # ncp
-    # method
+# Istotne argumenty:
+#   X - ramka danych z wartościami ciągłymi, z brakami lub bez
+#   ncp.min - minimalna liczba wymiarów brana pod uwagę w trakcie poszukiwań
+#   ncp.max - maksymalna liczba wymiarów brana pod uwagę w trakcie poszukiwań
+#   method - "Regularized" domyślnie lub "EM" - wyjaśnienie różnic w prezentacji
+#   scaleboolean - TRUE narzuca taką samą wagę dla wszystkich zmiennych
+#   method.cv - metoda kroswalidacji "gcv",  "loo" lub "Kfold" - wyjaśnienie różnic w prezentacji
+#   nbsim - tylko dla metody "Kfold", liczba iteracji
+#   pNA - tylko dla metody "Kfold", odsetek brakujących wartości który jest imputowany w kolejnych iteracjach
+#   threshold - wartość graniczna dla określenia zbieżności
+#   verbose - TRUE powoduje wyświetlenie paska postępu
 
-# METHOD PERFORMANCE
-## 3. perform the PCA on the completed data set using the PCA function 
-## of the FactoMineR package
-res.pca = PCA(res.comp$completeObs) 
+nb <- estim_ncpPCA(airquality, method='Regularized', pNA=0.05, method.cv="Kfold", ncp.min=1, nbsim=150, verbose=FALSE)
+# nb$criterion - wartości błędów prognozowania dla poszczególnych wymiarów
+# nb$ncp - wymiar wynikowy, dla którego uzyskany błąd był najmniejszy
 
+# Wizualizacja wyniku
+plot(1:5, nb$criterion, xlab="nb dim", ylab="MSEP")
+title(paste("Result = ", nb$ncp))
 
-# VISUALISING UNCERTAINITY DUE TO MISSING DATA
-res.mipca <- MIPCA(airquality, ncp = 2, nboot = 100)
-plot.MIPCA(res.mipca, choice = 'dim')
+# 2. Imputacja - metoda imputePCA
+
+# Istotne argumenty
+#    X	- ramka danych o wartościach ciągłych zawierająca braki
+#   ncp	- oszacowana liczba wymiarów
+#   scale	- j.w.
+#   method - j.w.
+#   row.w	- waga wierszy  (dmyślnie, wektor sanych 1 dla równych wag wszystkich wierszy)
+#   coeff.ridge	- 1 domyślnie, w celu zastosowania ustandaryzowanego algorytmu imputePCA; używana tylko gdy method="Regularized". 
+#               Mniej niż 1, aby uzyskać retultaty zbliżone do wyniku metody EM i więcej niż 1 aby zbliżyć się do wyniku imputacji średnią. 
+#   threshold - j.w.
+#   seed - ziarno
+#   nb.init	- liczba losowych inicjalizacji, pierwsza z nich to imputacja średnią
+#   maxiter	- maksymalna liczba iteracji algorytmu
+# ...	
+
+res.comp <- imputePCA(airquality, ncp=nb$ncp, method="Regularized") 
+head(res.comp$completeObs) # uzupełniona ramka
+
+# Wywołanie metody PCA - nieistotne z punktu widzenia imputacji
+res.pca <- PCA(res.comp$completeObs, graph=FALSE)
+# Wizualizacja rezultatów
+plot.PCA(res.pca, choix="var", graph.type='ggplot') +
+  theme(plot.background=element_rect(fill=NA, color=NA))
+
+# Niepewności
+res.mipca <- MIPCA(airquality, scale = TRUE, ncp = 2)
+# widoczne szumy w pobliżu wektorów odpowiadających kolumnom z brakami
 plot.MIPCA(res.mipca, 'var')
-
-# Przydatny link:
-## http://factominer.free.fr/course/missing.html
-?imputePCA
-
+plot.MIPCA(res.mipca, choice='dim')
 
 
 
