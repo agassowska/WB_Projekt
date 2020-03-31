@@ -304,7 +304,6 @@ res.comp$tab.disj[1:10,c(1:6,10)]
 res.comp$completeObs[1:7, ]
 ```
 
-## Wizualizacja danych imputowanych (DO WSTAWIENIA)
 
 ## Wynik algorytmu FAMD 
 ```{r imputed_data_vis4, dev.args=list(bg='transparent'), fig.height=4, fig.align='center'}
