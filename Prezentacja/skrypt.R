@@ -118,8 +118,6 @@ plot.MCA(res.mca, choix="var", graph.type='ggplot')
 res.mimca <- MIMCA(vnf, ncp=nb$ncp)
 plot.MIMCA(res.mimca, choice='dim')
 
-# metoda FAMD
-
 # ramka danych w brakach w kolumnie numerycznej i kolumnie kategorycznej
 data("wine")
 wine
@@ -131,21 +129,62 @@ y <- sample(nrow(wine), 3)
 wine$Label[x] <- NA
 wine$Harmony[y] <- NA
 
+#Metoda FAMD - najlepsza do automatycznego uzupełniania dużej wiedzy o danych
+
+# 1. Oszacowanie liczby wymiarów - metoda estim_ncpFAMD
+
+# Istotne argumenty:
+#   don - ramka danych z brakami lub bez - zmienne mogą być i ciągłe i kategoryczne
+#   ncp.min - minimalna liczba wymiarów brana pod uwagę w trakcie poszukiwań
+#   ncp.max - maksymalna liczba wymiarów brana pod uwagę w trakcie poszukiwań
+#   method - "Regularized" domyślnie lub "EM" - wyjaśnienie różnic w prezentacji
+#   method.cv - metoda kroswalidacji "gcv",  "loo" lub "Kfold" - wyjaśnienie różnic w prezentacji
+#   nbsim - tylko dla metody "Kfold", liczba iteracji
+#   pNA - tylko dla metody "Kfold", odsetek brakujących wartości który jest imputowany w kolejnych iteracjach
+#   threshold - wartość graniczna dla określenia zbieżności
+#   verbose - TRUE powoduje wyświetlenie paska postępu
 
 
-# szukanie wymiaru
 nb3 <- estim_ncpFAMD(wine, ncp.min=1, ncp.max = 3) # ncp dla których chcemy sprawdzac - tu od 1 do 3
 
-# imputacja
+# 2. Imputacja - metoda imputeFAMD
 
+# Istotne argumenty
+#   X- ramka danych zawierająca braki - zmienne mogą być i ciągłe i kategoryczne
+#   ncp	- oszacowana liczba wymiarów
+#   method - j.w.
+#   row.w	- waga wierszy  (dmyślnie, wektor sanych 1 dla równych wag wszystkich wierszy)
+#   coeff.ridge	- 1 domyślnie, w celu zastosowania ustandaryzowanego algorytmu imputePCA; używana tylko gdy method="Regularized". 
+#               Mniej niż 1, aby uzyskać retultaty zbliżone do wyniku metody EM i więcej niż 1 aby zbliżyć się do wyniku imputacji średnią. 
+#   threshold - j.w.
+#   sup.var - wektor określający rodzaj danych w każdej kolumnie (ciągłe lub kategoryczne) - jeśli nie podane algorytm sam się domyśla
+#   seed - ziarno
+#   maxiter	- maksymalna liczba iteracji algorytmu
+# ...	
 res.comp3 <- imputeFAMD(wine, ncp=2, 
-                       method="Regularized") 
+                        method="Regularized") 
 
 ?imputeFAMD
 
-# metoda MFA 
+# metoda MFA - też na danych wine 
+
+# Imputacja - imputeMFA
+
+# Istotne argumenty
+#   X- ramka danych zawierająca braki - zmienne mogą być i ciągłe i kategoryczne
+#   group - wektor określający liczbę zmiennych w każdej grupie (wcześniej musimy ustawić tak kolejność zmiennych w ramce aby dane z jednej grupy były obok siebie)
+#   ncp	- oszacowana liczba wymiarów
+#   type-  rodzaj danych w każdej z kolejnych grup - "c" albo "s" dla ciągłych, "n" dla kategorycznych
+#   method - j.w.
+#   row.w	- waga wierszy  (dmyślnie, wektor sanych 1 dla równych wag wszystkich wierszy)
+#   coeff.ridge	- 1 domyślnie, w celu zastosowania ustandaryzowanego algorytmu imputePCA; używana tylko gdy method="Regularized". 
+#               Mniej niż 1, aby uzyskać retultaty zbliżone do wyniku metody EM i więcej niż 1 aby zbliżyć się do wyniku imputacji średnią. 
+#   threshold - j.w.
+#   seed - ziarno
+#   maxiter	- maksymalna liczba iteracji algorytmu
+#   ...
 
 res.comp4 <- imputeMFA(wine, group=c(2,2,4), 
                        type=c('n', 's', 's'), ncp=2, graph=FALSE )  #graph=TRUE pokazuje kilka wykresów - przydatne
- 
+
 ?imputeMFA
