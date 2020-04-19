@@ -12,6 +12,9 @@ library(cowplot)
 library(patchwork)
 library(visdat)
 library(naniar)
+library(imputeMissings)
+library(mice)
+library(missForest)
 
 library(missMDA)
 
@@ -20,7 +23,7 @@ library(mlr3learners)
 library(mlr3measures)
 library(mlr3viz)
 
-# devtools::install_github("jabiru/tictoc")
+#devtools::install_github("jabiru/tictoc")
 library(tictoc)
 
 # ---
@@ -77,6 +80,43 @@ impute_missMDA <- function(dataset, nbsim=5) {
   res.comp <- imputeFAMD(dataset, nb$ncp)
   return(res.comp$completeObs)
 }
+#impute_basic - imputuje medianą wartości numeryczne oraz modą wartości kategoryczne
+impute_basic <- function(dataset){
+  return(data.frame(impute(dataset, method='median/mode')))
+}
+
+#impute_mice - imputuje za pomocą pakietu mice
+impute_mice <- function(dataset){
+  return(complete(mice(dataset)))
+  }
+
+#impute_missforest
+
+
+impute_missforest <- function(dataset){
+  data.imp <- missForest(dataset)
+  return(data.imp$ximp)
+}
+#impute_VIM_irmi
+# maxit - maximum number of iterations
+
+impute_VIM_irmi <- function(dataset, maxit=100){
+  return(irmi(dataset, maxit=maxit))
+}
+
+#impute_VIM_knn - k nearest neighbours
+impute_VIM_knn <- function(dataset, k=5){
+  return(kNN(dataset, k=k))
+}
+
+#impute_VIM_hotdeck 
+
+impute_VIM_hotdeck <- function(dataset){
+  return(hotdeck(dataset))
+}
+
+# bez amelii i softimpute - 
+#w amelii trzeba znac czy kolumny są kategoryczne czy numeryczne, a softimpute tylko dla numerycznych
 
 # ---
 # train_and_test function
