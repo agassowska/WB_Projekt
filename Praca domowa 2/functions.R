@@ -29,6 +29,8 @@ library(tictoc)
 # ---
 # load functions
 
+# takes no arguments and returns a clean dataset with missing values
+
 load_eucalyptus <- function() {
   # config
   set.seed(1)
@@ -68,25 +70,59 @@ load_eucalyptus <- function() {
 # ---
 # impute functions
 
-impute_missMDA <- function(dataset) {
-  tic('estimation')
-  nb <- estim_ncpFAMD(dataset)
-  toc()
-  tic('imputation')
-  res.comp <- imputeFAMD(dataset, ncp=nb$ncp)
-  toc()
+# takes clean dataset with missing values (additional arguments must have default values) and returns an imputed dataset
+
+impute_missMDA <- function(dataset, nbsim=5) {
+  nb <- estim_ncpFAMD(dataset, nbsim=nbsim)
+  res.comp <- imputeFAMD(dataset, nb$ncp)
   return(res.comp$completeObs)
 }
 
 # ---
-# other functions
+# train_and_test function
 
-train_and_test <- function(dataset, target, positive, folds=5, title='') {
-  resampling <- rsmp("cv", folds=folds)
-  learner <- lrn('classif.ranger', predict_type='prob')
-  task <- TaskClassif$new(id='task', backend=dataset, target=target, positive=positive)
+# takes:
+# - dataset - clean dataset with missing values
+# - imputer - a function from 'impute functions' section
+# - learner - a classification learner from mlr3learners (must return probabilities)
+# - target - name of target variable in dataset
+# - postive - label of positive class (defalut value is '1')
+# - folds - number of fold used for crossvalidation (default value is 5)
+# - train_size - size (0-1) of train set (default value is 0.8)
+# - title - title for crossvalidation metrics plot (default value is no title)
+# returns:
+# - train_dataset_imputation_time - time it took to impute train set with imputer function
+# - test_dataset_imputation_time - time it took to impute test set with imputer function
+# - cv_plot - plot of ROC, AUC, BACC, MCC achieved during crossvalidation stage
+# - mean_auc - mean AUC achieved during crossvalidation stage
+# - mean_bacc - mean BACC achieved during crossvalidation stage
+# - mean_mcc - mean MCC achieved during crossvalidation stage
+# - test_auc - AUC achievied druing test stage
+# - test_bacc - BACC achievied druing test stage
+# - test_mmc - MCC achievied druing test stage
+# - learner - learner trained on whole train set
+
+train_and_test <- function(dataset, imputer, learner, target, positive='1', folds=5, train_size=0.8, title='') {
+  # train/test split
+  train_set <- sample(nrow(dataset), 0.8*nrow(dataset))
+  test_set <- setdiff(seq_len(nrow(dataset)), train_set)
   
-  rr <- resample(task, learner, resampling, store_models=TRUE)
+  # imputation of train/test sets with imputer function (each set is imputed individually)
+  tic('train dataset imputation')
+  train_dataset <- imputer(dataset[train_set, ])
+  times <- toc()
+  train_dataset_imputation_time <- times$toc-times$tic
+    
+  tic('test dataset imputation')
+  test_dataset <- imputer(dataset[test_set, ])
+  times <- toc()
+  test_dataset_imputation_time <- times$toc-times$tic
+  
+  # crossvalidation
+  resampling <- rsmp("cv", folds=folds)
+  task_cv <- TaskClassif$new(id='task_cv', backend=train_dataset, target=target, positive=positive)
+  
+  rr <- resample(task_cv, learner, resampling, store_models=TRUE)
   
   aucs <- rr$score(msr('classif.auc'))
   mean_auc <- mean(aucs$classif.auc)
@@ -95,10 +131,11 @@ train_and_test <- function(dataset, target, positive, folds=5, title='') {
     labs(title='Receiver operating characteristic') +
     xlab('Specifity') +
     ylab('Sensivity') +
-    annotate(geom="label", x=.85, y=0, label=label, fill='white') +
+    annotate(geom="label", x=0.5, y=0, label=label, fill='white') +
     theme_light() +
     theme(
-      legend.position = 'none'
+      legend.position = 'none',
+      plot.title=element_text(hjust=0.5)
     )
   
   baccs <- rr$score(msr('classif.bacc'))
@@ -117,7 +154,8 @@ train_and_test <- function(dataset, target, positive, folds=5, title='') {
     theme(
       axis.ticks.x=element_blank(),
       axis.text.x=element_blank(),
-      legend.position = 'none'
+      legend.position = 'none',
+      plot.title=element_text(hjust=0.5)
     )
   
   mccs <- rr$score(msr('classif.mcc'))
@@ -131,28 +169,41 @@ train_and_test <- function(dataset, target, positive, folds=5, title='') {
     labs(title='Matthews correlation coefficient', colour='Fold') +
     xlab('') +
     ylab('') +
-    annotate(geom="label", x=0, y=0, label=label, fill='white') +
+    annotate(geom='label', x=0, y=0, label=label, fill='white') +
     theme_light() +
     theme(
       axis.ticks.x=element_blank(),
-      axis.text.x=element_blank()
+      axis.text.x=element_blank(),
+      plot.title=element_text(hjust=0.5)
     )
   
   temp <- p2 + p3
   plot <- p1 + temp + plot_annotation(title=title)
   
-  return(list(plot=plot, mean_auc=mean_auc, mean_bacc=mean_bacc, mean_mcc=mean_mcc))
+  # testing on test set
+  task_train <- TaskClassif$new(id='task_train', backend=train_dataset, target=target, positive=positive)
+  learner$train(task_train)
+  
+  task_predict <- TaskClassif$new(id='task_predict', backend=test_dataset, target=target, positive=positive)
+  prediction <- learner$predict(task_predict)
+  
+  test_auc <- prediction$score(msr('classif.auc'))
+  test_bacc <- prediction$score(msr('classif.bacc'))
+  test_mcc <- prediction$score(msr('classif.mcc'))
+  
+  # returning all values
+  return(list(train_dataset_imputation_time=train_dataset_imputation_time[['elapsed']],
+              test_dataset_imputation_time=test_dataset_imputation_time[['elapsed']],
+              cv_plot=plot, mean_auc=mean_auc, mean_bacc=mean_bacc, mean_mcc=mean_mcc,
+              test_auc=test_auc[['classif.auc']], test_bacc=test_bacc[['classif.bacc']], test_mcc=test_mcc[['classif.mcc']],
+              learner=learner))
 }
 
 # ---
 # example
 
-eucalyptus_raw <- load_eucalyptus()
-vis_dat(eucalyptus_raw)
-eucalyptus_imputed <- impute_missMDA(dataset=eucalyptus_raw)
-vis_dat(eucalyptus_imputed)
-result <- train_and_test(eucalyptus_imputed, target='Utility', positive='1', title='eucalyptus + missMDA')
-result$plot
-
-# ---
-# playground
+#eucalyptus <- load_eucalyptus()
+#vis_dat(eucalyptus)
+#learner <- lrn('classif.ranger', predict_type='prob')
+#result <- train_and_test(eucalyptus, imputer=impute_missMDA, learner=learner, target='Utility', positive='1', title='eucalyptus + missMDA')
+#result$cv_plot
