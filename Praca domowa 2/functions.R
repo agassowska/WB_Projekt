@@ -71,6 +71,236 @@ load_eucalyptus <- function() {
   return(dataset)
 }
 
+load_cylinder_bands <- function(){
+  
+  set.seed(1)
+  source <- 'openml'
+  
+  # download data
+  list_all_openml_dataset <- listOMLDataSets()
+  
+  openml_id <- list_all_openml_dataset[list_all_openml_dataset$name == 'cylinder-bands', 'data.id']
+  dataset_openml <- getOMLDataSet(data.id = openml_id)
+  data <- dataset_openml$data
+  target_column <- dataset_openml$target.features
+  
+  # preprocessing
+  data[data == "?"] <- NA 
+  
+  ## getting rid of irrelevant columns
+  data <- data[, -c(2,6,8,9,12,23)] 
+  
+  ## Label-encoding
+  df <- data
+  
+  label_cols <- c('customer', 'paper_type', 'ink_type', 'solvent_type', 'press_type', 'cylinder_size', 'paper_mill_location', 'grain_screened', 'proof_on_ctd_ink', 'type_on_cylinder')
+  for (col in label_cols){
+    df[, col] <- as.numeric(df[, col])
+    df[which(is.na(data[, col]), arr.ind = TRUE), col] <- NA
+    df[, col] <- as.factor(df[,col])
+  }
+  
+  df$job_number <- as.factor(df$job_number)
+  to_numeric <- c('ink_temperature', 'roughness', 'varnish_pct', 'solvent_pct', 'ink_pct', 'wax', 'hardener', 'anode_space_ratio')
+  to_integer <- c('blade_pressure', 'proof_cut', 'viscosity', 'ESA_Voltage', 'roller_durometer', 'current_density', 'chrome_content', 'humifity', 'press_speed')
+  
+  for (col in to_numeric){
+    df[, col] <- as.numeric(df[, col])
+  }
+  
+  for (col in to_integer) {
+    df[, col] <- as.integer(df[, col])
+  }
+  
+  return(df)
+}
+
+load_credit_aproval <- function(){
+  
+  set.seed(1)
+  source <- 'openml'
+  
+  datasets <- listOMLDataSets()
+  data_name <- "credit-approval"
+  openml_id <- datasets[datasets$name == data_name ,]$data.id
+  
+  data <- getOMLDataSet(data.id= openml_id)
+  target_column <- data$target.features
+  
+  df <- data$data
+  
+  # preprocessing
+  for (col in colnames(df)){
+    df[col][df[col] == "?"] <- NA
+  }
+
+  change_to_factor <- function(df){
+    for (i in seq_along(colnames(df))){
+      if (!is.numeric(df[,i])){
+        df[,i] <- as.factor(df[,i])
+      }
+    }
+    return(df)
+  }
+  df <- change_to_factor(df)
+  
+
+  colnames(df) <- c("Sex","Age","Debt","Married","BankCustomer","EducationLevel","Ethicity","Years employed","PriorDefault",
+                    "Employed","CreditScore","Driverslicense","Citizen","Zipcode","Income","class")
+  
+  dataset <- df
+  return(dataset)
+}
+
+load_adult <- function(){
+  set.seed(1)
+  source <- 'openml'
+  
+  
+  # download data
+  list_all_openml_dataset <- listOMLDataSets()
+  
+  openml_id <- 1590L
+  data_name <- list_all_openml_dataset[list_all_openml_dataset[,'data.id'] == openml_id,'name']
+  
+  dataset_openml <- getOMLDataSet(data.id = openml_id)
+  dataset_raw <- dataset_openml$data
+  target_column <- dataset_openml$target.features
+  
+  
+  # preprocessing
+  dataset_raw <- dataset_raw[, -c(3, 5)]
+  dataset_raw[,'age'] <- as.integer(dataset_raw[,'age'])
+  czynnik <- sapply(dataset_raw, class)=="factor"
+  for (i in 1:13) if (czynnik[i]){
+    dataset_raw[,i] <- tolower(as.character(dataset_raw[,i]))
+    if (i==12){
+      dataset_raw[!is.na(dataset_raw$native.country) & dataset_raw$native.country=='hong',
+                  'native.country'] <- 'hong-kong'
+      dataset_raw[!is.na(dataset_raw$native.country) & dataset_raw$native.country=='holand-netherlands',
+                  'native.country'] <- 'netherlands'
+      dataset_raw[!is.na(dataset_raw$native.country) & dataset_raw$native.country=='trinadad&tobago',
+                  'native.country'] <- 'trinidad&tobago'
+    }
+    dataset_raw[,i] <- factor(dataset_raw[,i],
+                              levels=unique(dataset_raw[,i]),
+                              ordered=F)
+  }
+  dataset_raw[,'relationship'] <- as.character(dataset_raw[,'relationship'])
+  dataset_raw[dataset_raw$relationship %in% c("husband", "wife"),'relationship'] <- "married"
+  dataset_raw[,'relationship'] <- factor(dataset_raw[,'relationship'],
+                                         levels=unique(dataset_raw[,'relationship']),
+                                         ordered=F)
+
+  dataset <- dataset_raw
+  return(dataset)
+}
+
+load_dresses_sales <- function(){
+  set.seed(1)
+  source <- 'openml'
+  
+  list_all_openml_dataset <- listOMLDataSets()
+  
+  openml_id <- 	23381L
+  data_name <- list_all_openml_dataset[list_all_openml_dataset[,'data.id'] == openml_id,'name']
+  
+  dataset_openml <- getOMLDataSet(data.id = openml_id)
+  dataset_raw <- dataset_openml$data
+  target_column <- dataset_openml$target.features
+  
+  
+  # preprocessing
+  colnames(dataset_raw)[1:12] <- c('Style', 'Price', 'Rating', 'Size', 'Season', 'NeckLine',
+                                   'SleeveLength', 'waiseline', 'Material', 'FabricType',
+                                   'Decoration', 'Pattern')
+  zmienne <- c('Style', 'Price', 'Size', 'Season', 'NeckLine',
+               'SleeveLength', 'waiseline', 'Material', 'FabricType',
+               'Decoration', 'Pattern')
+  for (i in zmienne){
+    dataset_raw[,i] <- tolower(dataset_raw[,i])
+  }
+  
+  dataset_raw$Season <- ifelse(dataset_raw$Season=='automn','autumn',dataset_raw$Season)
+  
+  d <- ifelse(dataset_raw$Rating==0,TRUE,FALSE)
+  dataset_raw$Rating[d] <- NA
+  
+  for (i in zmienne){
+    dataset_raw[,i] <- as.factor(dataset_raw[,i])
+  }
+  
+  dataset <- dataset_raw
+  return(dataset)
+}
+
+load_sick <- function(){
+  set.seed(1)
+  source <- 'openml'
+  
+  
+  # download data
+  list_all_openml_dataset <- listOMLDataSets()
+  
+  openml_id <- 38
+  data_name <- list_all_openml_dataset[list_all_openml_dataset[,'data.id'] == openml_id,'name']
+  
+  dataset_openml <- getOMLDataSet(data.id = openml_id)
+  dataset_raw <- dataset_openml$data
+  target_column <- dataset_openml$target.features
+  
+  
+  # preprocessing
+  dataset <- dataset_raw %>% 
+    select(-TBG, -TBG_measured) %>%
+    mutate(age=ifelse(age>123, NA, age))
+  
+  return(dataset)
+}
+
+load_speed_dating <- function(){
+  set.seed(1)
+  source <- 'openml'
+  
+  list_all_openml_dataset <- listOMLDataSets()
+  openml_id <- 40536L
+  data_name <- list_all_openml_dataset[list_all_openml_dataset[, 'data.id']==openml_id, 'name']
+  
+  dataset_openml <- getOMLDataSet(data.id=openml_id)
+  dataset_raw <- dataset_openml$data
+  target_column <- dataset_openml$target.features
+  
+  # preprocessing
+  dataset <- dataset_raw
+  dataset$d_age[is.na(dataset$age) | is.na(dataset$age_o)] <- NA
+  
+  return(dataset)
+}
+
+load_okcupid_stem <- function(){
+  set.seed(1)
+  source <- 'openml'
+  
+  
+  list_all_openml_dataset <- listOMLDataSets()
+  
+  openml_id <- 41278L
+
+  dataset_openml <- getOMLDataSet(data.id = openml_id)
+  dataset_raw <- dataset_openml$data
+  target_column <- dataset_openml$target.features
+  
+  
+  # preprocessing
+  dataset_raw <- dataset_raw[,-11]
+  
+  dataset_raw <- dataset_raw%>%filter(job!="student")
+  dataset <- dataset_raw
+  
+  return(dataset)
+}
+
+
 # ---
 # impute functions
 
@@ -244,11 +474,21 @@ train_and_test <- function(dataset, imputer, learner, target, positive='1', fold
               learner=learner))
 }
 
-# ---
-# example
-
-#eucalyptus <- load_eucalyptus()
-#vis_dat(eucalyptus)
-#learner <- lrn('classif.ranger', predict_type='prob')
-#result <- train_and_test(eucalyptus, imputer=impute_missMDA, learner=learner, target='Utility', positive='1', title='eucalyptus + missMDA')
-#result$cv_plot
+# # ---
+# # example
+# 
+# eucalyptus <- load_eucalyptus()
+# vis_dat(eucalyptus)
+# learner <- lrn('classif.ranger', predict_type='prob')
+# result <- train_and_test(eucalyptus, imputer=impute_missMDA, learner=learner, target='Utility', positive='1', title='eucalyptus + missMDA')
+# result$cv_plot
+# 
+# # sets:
+# eucalyptus <- load_eucalyptus()
+# cylinder_bands <- load_cylinder_bands()
+# credit_approval <- load_credit_aproval()
+# adult <- load_adult()
+# dresses_sales <- load_dresses_sales()
+# sick <- load_sick()
+# speed_dating <- load_speed_dating()
+# no_name <- load_okcupid_stem()
