@@ -15,6 +15,7 @@ library(naniar)
 library(imputeMissings)
 library(mice)
 library(missForest)
+library(VIM)
 
 library(missMDA)
 
@@ -80,10 +81,14 @@ impute_missMDA <- function(dataset, nbsim=5) {
   res.comp <- imputeFAMD(dataset, nb$ncp)
   return(res.comp$completeObs)
 }
+
+
 #impute_basic - imputuje medianą wartości numeryczne oraz modą wartości kategoryczne
 impute_basic <- function(dataset){
   return(data.frame(impute(dataset, method='median/mode')))
 }
+
+
 
 #impute_mice - imputuje za pomocą pakietu mice
 impute_mice <- function(dataset){
