@@ -1,0 +1,38 @@
+```{r missdMDA_(FAMD)_{{id}}, include=FALSE}
+load_result <- load({{id}})
+
+name <- load_result$name
+dataset <- load_result$dataset
+target <- load_result$target
+
+learner <- lrn('classif.ranger', predict_type='prob')
+result <- train_and_test(dataset, imputer=impute_missMDA, learner=learner, target=target, positive='1', title=paste0(name, ' + missMDA (FAMD)'))
+
+time_data[nrow(time_data)+1, ] <- c('missMDA_(FAMD)', name, result$train_dataset_imputation_time, result$test_dataset_imputation_time)
+test_data[nrow(test_data)+1, ] <- c('missMDA_(FAMD)', name, result$test_auc, result$test_bacc, result$test_mcc)
+```
+
+### `r name` {.tabset .tabset-fade .tabset-pills}
+
+#### Crossvalidation results
+```{r missMDA_(FAMD)_{{id}}_crossvalidation, echo=FALSE, fig.align='center', fig.width=10, fig.height=5, out.width='100%'}
+result$cv_plot
+```
+
+#### Imputation times
+```{r missMDA_(FAMD)_{{id}}_times, echo=FALSE}
+cat(paste('Train set imputation time: ', round(result$train_dataset_imputation_time, 3)))
+cat(paste('Test set imputation time: ', round(result$test_dataset_imputation_time, 3)))
+```
+
+#### Test set results
+```{r missMDA_(FAMD)_{{id}}_measures, echo=FALSE}
+cat(paste('Test set AUC: ', round(result$test_auc, 3)))
+cat(paste('Test set BACC: ', round(result$test_bacc, 3)))
+cat(paste('Test set MCC: ', round(result$test_mcc, 3)))
+```
+
+#### Dataset overview
+```{r missMDA_(FAMD)_{{id}}_overview, echo=FALSE, fig.align='center', fig.width=8, fig.height=6}
+vis_dat(dataset)
+```

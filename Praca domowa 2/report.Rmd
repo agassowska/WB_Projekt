@@ -6,9 +6,16 @@ css: styles.css
 ---
 
 ```{r setup, include=FALSE}
+library(knitr)
 source('functions.R')
-time_data <- data.frame(package=character(), train_set_imputation_time=numeric(), test_set_imputation_time=numeric(), stringsAsFactors=FALSE)
-test_data <- data.frame(package=character(), test_auc=numeric(), test_bacc=numeric(), test_mcc=numeric(), stringsAsFactors=FALSE)
+
+time_data <- data.frame(package=character(), dataset=character(),
+                        train_set_imputation_time=numeric(), test_set_imputation_time=numeric(), stringsAsFactors=FALSE)
+test_data <- data.frame(package=character(), dataset=character(),
+                        test_auc=numeric(), test_bacc=numeric(), test_mcc=numeric(), stringsAsFactors=FALSE)
+ids <- list.dirs(path='./datasets', full.names=TRUE)
+ids <- gsub("./datasets(/openml_dataset_)?", "", ids)
+ids <- na.omit(as.numeric(ids))
 ```
 
 Here is a nice description of what this report contains.
@@ -16,36 +23,13 @@ Here is a nice description of what this report contains.
 Below, are all the results, grouped by package and dataset. Example:
 
 <details>
-  <summary>missMDA</summary>
-    
-### eucalyptus {.tabset .tabset-fade .tabset-pills}
-
-```{r missdMDA_eucalyptus, include=FALSE}
-eucalyptus <- load_eucalyptus()
-learner <- lrn('classif.ranger', predict_type='prob')
-result <- train_and_test(eucalyptus, imputer=impute_missMDA, learner=learner, target='Utility', positive='1', title='eucalyptus + missMDA')
-
-time_data[nrow(time_data)+1, ] <- c('missMDA', result$train_dataset_imputation_time, result$test_dataset_imputation_time)
-test_data[nrow(test_data)+1, ] <- c('missMDA', result$test_auc, result$test_bacc, result$test_mcc)
+  <summary>basic (median/mode)</summary>
+  
+```{r basic, include=FALSE}
+src <- lapply(ids, function(id) knit_expand(file='./templates/basic.Rmd'))
 ```
 
-#### Crossvalidation results
-```{r missMDA_eucalyptus_crossvalidation, dependson='missMDA_eucalyptus', echo=FALSE, fig.width=12, fig.height=6, out.width='100%'}
-result$cv_plot
-```
-
-#### Imputation times
-```{r missMDA_eucalyptus_times, dependson='missMDA_eucalyptus', echo=FALSE}
-cat(paste('Train set imputation time: ', round(result$train_dataset_imputation_time, 3)))
-cat(paste('Test set imputation time: ', round(result$test_dataset_imputation_time, 3)))
-```
-
-#### Test set results
-```{r missMDA_eucalyptus_measures, dependson='missMDA_eucalyptus', echo=FALSE}
-cat(paste('Test set AUC: ', round(result$test_auc, 3)))
-cat(paste('Test set BACC: ', round(result$test_bacc, 3)))
-cat(paste('Test set MCC: ', round(result$test_mcc, 3)))
-```
+`r knit(text=unlist(src))`
 
 </details> 
 

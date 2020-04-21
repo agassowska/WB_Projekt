@@ -1,22 +1,17 @@
-# ---
+# ------
 # packages
 
 library(OpenML)
 
-library(dplyr)
-library(purrr)
-library(reshape2)
-
 library(ggplot2)
-library(cowplot)
-library(patchwork)
 library(visdat)
 library(naniar)
+library(patchwork)
+
 library(imputeMissings)
-library(mice)
 library(missForest)
 library(VIM)
-
+library(mice)
 library(missMDA)
 
 library(mlr3)
@@ -27,331 +22,77 @@ library(mlr3viz)
 #devtools::install_github("jabiru/tictoc")
 library(tictoc)
 
-# ---
+
+# ------
 # functions
 
 # ---
-# load functions
+# load function
 
-# takes no arguments and returns a clean dataset with missing values
+# takes dataset id and returns a list of length of 2:
+# - name - name of the dataset
+# - dataset - processed dataset
 
-load_eucalyptus <- function() {
-  # config
-  set.seed(1)
-  source <- 'openml'
+load <- function(id) {
+  dirs <- list.dirs(path='./datasets', full.names=TRUE)
+  dir <- dirs[grep(paste0('./datasets/openml_dataset_', id), dirs)]
   
+  result <- inner_load(dir)
   
-  # download data
-  list_all_openml_dataset <- listOMLDataSets()
-  
-  openml_id <- 188L
-  data_name <- list_all_openml_dataset[list_all_openml_dataset[, 'data.id']==openml_id, 'name']
-  
-  dataset_openml <- getOMLDataSet(data.id=openml_id)
-  dataset_raw <- dataset_openml$data
-  target_column <- dataset_openml$target.features
-  
-  
-  # preprocessing
-  ## cleaning types of columns, removing columns etc.
-  dataset <- dataset_raw %>%
-    # transform Latitude from degrees and minutes to degrees with fractions
-    mutate(Latitude=-as.numeric(substr(Latitude, 1, 2))-as.numeric(substr(Latitude, 5, 6))/60) %>%
-    # cast Sp to unordered factor
-    mutate(Sp=factor(Sp, levels=unique(Sp), ordered=F)) %>%
-    # change unrealistic Latitude values to NAs
-    mutate(Latitude=ifelse(Latitude<(-60), NA, Latitude)) %>%
-    # change unrealistics DBH values to NAs
-    mutate(DBH=ifelse(DBH>100, NA, DBH)) %>%
-    # transform problem to binary classification
-    mutate(Utility=factor(ifelse(Utility %in% c('best', 'good'), 1, 0), levels=c(1, 0), ordered=F)) %>%
-    # drop some columns
-    select(-Abbrev, -Rep, -Locality, -Map_Ref)
-  
-  return(dataset)
+  return(result)
 }
 
-load_cylinder_bands <- function(){
+inner_load <- function(dir) {
+  wd <- getwd()
+  setwd(dir)
   
-  set.seed(1)
-  source <- 'openml'
+  surogate_env=new.env(parent=.BaseNamespaceEnv)
+  attach(surogate_env)
+  source('code.R', surogate_env)
+  name <- surogate_env$data_name
+  dataset <- surogate_env$dataset
+  target <- surogate_env$target_column
   
-  # download data
-  list_all_openml_dataset <- listOMLDataSets()
+  setwd(wd)
   
-  openml_id <- list_all_openml_dataset[list_all_openml_dataset$name == 'cylinder-bands', 'data.id']
-  dataset_openml <- getOMLDataSet(data.id = openml_id)
-  data <- dataset_openml$data
-  target_column <- dataset_openml$target.features
-  
-  # preprocessing
-  data[data == "?"] <- NA 
-  
-  ## getting rid of irrelevant columns
-  data <- data[, -c(2,6,8,9,12,23)] 
-  
-  ## Label-encoding
-  df <- data
-  
-  label_cols <- c('customer', 'paper_type', 'ink_type', 'solvent_type', 'press_type', 'cylinder_size', 'paper_mill_location', 'grain_screened', 'proof_on_ctd_ink', 'type_on_cylinder')
-  for (col in label_cols){
-    df[, col] <- as.numeric(df[, col])
-    df[which(is.na(data[, col]), arr.ind = TRUE), col] <- NA
-    df[, col] <- as.factor(df[,col])
-  }
-  
-  df$job_number <- as.factor(df$job_number)
-  to_numeric <- c('ink_temperature', 'roughness', 'varnish_pct', 'solvent_pct', 'ink_pct', 'wax', 'hardener', 'anode_space_ratio')
-  to_integer <- c('blade_pressure', 'proof_cut', 'viscosity', 'ESA_Voltage', 'roller_durometer', 'current_density', 'chrome_content', 'humifity', 'press_speed')
-  
-  for (col in to_numeric){
-    df[, col] <- as.numeric(df[, col])
-  }
-  
-  for (col in to_integer) {
-    df[, col] <- as.integer(df[, col])
-  }
-  
-  return(df)
+  return(list(name=name, dataset=dataset, target=target))
 }
-
-load_credit_aproval <- function(){
-  
-  set.seed(1)
-  source <- 'openml'
-  
-  datasets <- listOMLDataSets()
-  data_name <- "credit-approval"
-  openml_id <- datasets[datasets$name == data_name ,]$data.id
-  
-  data <- getOMLDataSet(data.id= openml_id)
-  target_column <- data$target.features
-  
-  df <- data$data
-  
-  # preprocessing
-  for (col in colnames(df)){
-    df[col][df[col] == "?"] <- NA
-  }
-
-  change_to_factor <- function(df){
-    for (i in seq_along(colnames(df))){
-      if (!is.numeric(df[,i])){
-        df[,i] <- as.factor(df[,i])
-      }
-    }
-    return(df)
-  }
-  df <- change_to_factor(df)
-  
-
-  colnames(df) <- c("Sex","Age","Debt","Married","BankCustomer","EducationLevel","Ethicity","Years employed","PriorDefault",
-                    "Employed","CreditScore","Driverslicense","Citizen","Zipcode","Income","class")
-  
-  dataset <- df
-  return(dataset)
-}
-
-load_adult <- function(){
-  set.seed(1)
-  source <- 'openml'
-  
-  
-  # download data
-  list_all_openml_dataset <- listOMLDataSets()
-  
-  openml_id <- 1590L
-  data_name <- list_all_openml_dataset[list_all_openml_dataset[,'data.id'] == openml_id,'name']
-  
-  dataset_openml <- getOMLDataSet(data.id = openml_id)
-  dataset_raw <- dataset_openml$data
-  target_column <- dataset_openml$target.features
-  
-  
-  # preprocessing
-  dataset_raw <- dataset_raw[, -c(3, 5)]
-  dataset_raw[,'age'] <- as.integer(dataset_raw[,'age'])
-  czynnik <- sapply(dataset_raw, class)=="factor"
-  for (i in 1:13) if (czynnik[i]){
-    dataset_raw[,i] <- tolower(as.character(dataset_raw[,i]))
-    if (i==12){
-      dataset_raw[!is.na(dataset_raw$native.country) & dataset_raw$native.country=='hong',
-                  'native.country'] <- 'hong-kong'
-      dataset_raw[!is.na(dataset_raw$native.country) & dataset_raw$native.country=='holand-netherlands',
-                  'native.country'] <- 'netherlands'
-      dataset_raw[!is.na(dataset_raw$native.country) & dataset_raw$native.country=='trinadad&tobago',
-                  'native.country'] <- 'trinidad&tobago'
-    }
-    dataset_raw[,i] <- factor(dataset_raw[,i],
-                              levels=unique(dataset_raw[,i]),
-                              ordered=F)
-  }
-  dataset_raw[,'relationship'] <- as.character(dataset_raw[,'relationship'])
-  dataset_raw[dataset_raw$relationship %in% c("husband", "wife"),'relationship'] <- "married"
-  dataset_raw[,'relationship'] <- factor(dataset_raw[,'relationship'],
-                                         levels=unique(dataset_raw[,'relationship']),
-                                         ordered=F)
-
-  dataset <- dataset_raw
-  return(dataset)
-}
-
-load_dresses_sales <- function(){
-  set.seed(1)
-  source <- 'openml'
-  
-  list_all_openml_dataset <- listOMLDataSets()
-  
-  openml_id <- 	23381L
-  data_name <- list_all_openml_dataset[list_all_openml_dataset[,'data.id'] == openml_id,'name']
-  
-  dataset_openml <- getOMLDataSet(data.id = openml_id)
-  dataset_raw <- dataset_openml$data
-  target_column <- dataset_openml$target.features
-  
-  
-  # preprocessing
-  colnames(dataset_raw)[1:12] <- c('Style', 'Price', 'Rating', 'Size', 'Season', 'NeckLine',
-                                   'SleeveLength', 'waiseline', 'Material', 'FabricType',
-                                   'Decoration', 'Pattern')
-  zmienne <- c('Style', 'Price', 'Size', 'Season', 'NeckLine',
-               'SleeveLength', 'waiseline', 'Material', 'FabricType',
-               'Decoration', 'Pattern')
-  for (i in zmienne){
-    dataset_raw[,i] <- tolower(dataset_raw[,i])
-  }
-  
-  dataset_raw$Season <- ifelse(dataset_raw$Season=='automn','autumn',dataset_raw$Season)
-  
-  d <- ifelse(dataset_raw$Rating==0,TRUE,FALSE)
-  dataset_raw$Rating[d] <- NA
-  
-  for (i in zmienne){
-    dataset_raw[,i] <- as.factor(dataset_raw[,i])
-  }
-  
-  dataset <- dataset_raw
-  return(dataset)
-}
-
-load_sick <- function(){
-  set.seed(1)
-  source <- 'openml'
-  
-  
-  # download data
-  list_all_openml_dataset <- listOMLDataSets()
-  
-  openml_id <- 38
-  data_name <- list_all_openml_dataset[list_all_openml_dataset[,'data.id'] == openml_id,'name']
-  
-  dataset_openml <- getOMLDataSet(data.id = openml_id)
-  dataset_raw <- dataset_openml$data
-  target_column <- dataset_openml$target.features
-  
-  
-  # preprocessing
-  dataset <- dataset_raw %>% 
-    select(-TBG, -TBG_measured) %>%
-    mutate(age=ifelse(age>123, NA, age))
-  
-  return(dataset)
-}
-
-load_speed_dating <- function(){
-  set.seed(1)
-  source <- 'openml'
-  
-  list_all_openml_dataset <- listOMLDataSets()
-  openml_id <- 40536L
-  data_name <- list_all_openml_dataset[list_all_openml_dataset[, 'data.id']==openml_id, 'name']
-  
-  dataset_openml <- getOMLDataSet(data.id=openml_id)
-  dataset_raw <- dataset_openml$data
-  target_column <- dataset_openml$target.features
-  
-  # preprocessing
-  dataset <- dataset_raw
-  dataset$d_age[is.na(dataset$age) | is.na(dataset$age_o)] <- NA
-  
-  return(dataset)
-}
-
-load_okcupid_stem <- function(){
-  set.seed(1)
-  source <- 'openml'
-  
-  
-  list_all_openml_dataset <- listOMLDataSets()
-  
-  openml_id <- 41278L
-
-  dataset_openml <- getOMLDataSet(data.id = openml_id)
-  dataset_raw <- dataset_openml$data
-  target_column <- dataset_openml$target.features
-  
-  
-  # preprocessing
-  dataset_raw <- dataset_raw[,-11]
-  
-  dataset_raw <- dataset_raw%>%filter(job!="student")
-  dataset <- dataset_raw
-  
-  return(dataset)
-}
-
 
 # ---
 # impute functions
 
 # takes clean dataset with missing values (additional arguments must have default values) and returns an imputed dataset
 
-impute_missMDA <- function(dataset, nbsim=5) {
-  nb <- estim_ncpFAMD(dataset, nbsim=nbsim)
-  res.comp <- imputeFAMD(dataset, nb$ncp)
-  return(res.comp$completeObs)
-}
-
-
-#impute_basic - imputuje medianą wartości numeryczne oraz modą wartości kategoryczne
-impute_basic <- function(dataset){
+impute_basic <- function(dataset) {
   return(data.frame(impute(dataset, method='median/mode')))
 }
 
-
-
-#impute_mice - imputuje za pomocą pakietu mice
-impute_mice <- function(dataset){
-  return(complete(mice(dataset)))
-  }
-
-#impute_missforest
-
-
-impute_missforest <- function(dataset){
+impute_missforest <- function(dataset) {
   data.imp <- missForest(dataset)
   return(data.imp$ximp)
 }
-#impute_VIM_irmi
-# maxit - maximum number of iterations
 
-impute_VIM_irmi <- function(dataset, maxit=100){
-  return(irmi(dataset, maxit=maxit))
+impute_VIM_irmi <- function(dataset) {
+  return(irmi(dataset, imp_var=FALSE))
 }
 
-#impute_VIM_knn - k nearest neighbours
-impute_VIM_knn <- function(dataset, k=5){
-  return(kNN(dataset, k=k))
+impute_VIM_knn <- function(dataset) {
+  return(kNN(dataset, imp_var=FALSE))
 }
 
-#impute_VIM_hotdeck 
-
-impute_VIM_hotdeck <- function(dataset){
-  return(hotdeck(dataset))
+impute_VIM_hotdeck <- function(dataset) {
+  return(hotdeck(dataset, imp_var=FALSE))
 }
 
-# bez amelii i softimpute - 
-#w amelii trzeba znac czy kolumny są kategoryczne czy numeryczne, a softimpute tylko dla numerycznych
+impute_mice <- function(dataset) {
+  return(complete(mice(dataset)))
+}
+
+impute_missMDA <- function(dataset) {
+  nb <- estim_ncpFAMD(dataset, nbsim=5)
+  res.comp <- imputeFAMD(dataset, nb$ncp)
+  return(res.comp$completeObs)
+}
 
 # ---
 # train_and_test function
@@ -384,14 +125,20 @@ train_and_test <- function(dataset, imputer, learner, target, positive='1', fold
   
   # imputation of train/test sets with imputer function (each set is imputed individually)
   tic('train dataset imputation')
-  train_dataset <- imputer(dataset[train_set, ])
+  train_dataset <- imputer(dataset[train_set, !(colnames(dataset) %in% c(target))])
   times <- toc()
   train_dataset_imputation_time <- times$toc-times$tic
+  tarcol1 <- data.frame(dataset[train_set, target])
+  colnames(tarcol1) <- target
+  train_dataset <- cbind(train_dataset, tarcol1)
     
   tic('test dataset imputation')
-  test_dataset <- imputer(dataset[test_set, ])
+  test_dataset <- imputer(dataset[test_set, !(colnames(dataset) %in% c(target))])
   times <- toc()
   test_dataset_imputation_time <- times$toc-times$tic
+  tarcol2 <- data.frame(dataset[test_set, target])
+  colnames(tarcol2) <- target
+  test_dataset <- cbind(test_dataset, tarcol2)
   
   # crossvalidation
   resampling <- rsmp("cv", folds=folds)
@@ -474,21 +221,14 @@ train_and_test <- function(dataset, imputer, learner, target, positive='1', fold
               learner=learner))
 }
 
-# # ---
-# # example
-# 
-# eucalyptus <- load_eucalyptus()
-# vis_dat(eucalyptus)
-# learner <- lrn('classif.ranger', predict_type='prob')
-# result <- train_and_test(eucalyptus, imputer=impute_missMDA, learner=learner, target='Utility', positive='1', title='eucalyptus + missMDA')
-# result$cv_plot
-# 
-# # sets:
-# eucalyptus <- load_eucalyptus()
-# cylinder_bands <- load_cylinder_bands()
-# credit_approval <- load_credit_aproval()
-# adult <- load_adult()
-# dresses_sales <- load_dresses_sales()
-# sick <- load_sick()
-# speed_dating <- load_speed_dating()
-# no_name <- load_okcupid_stem()
+
+# ------
+# example
+
+#name <- load(1590)$dataset
+#gg_miss_var(name)
+#target <- load(188)$target
+#pos=dataset[1, target]
+#dataset[, target] <- factor(unlist(lapply(dataset[, target], function(x) ifelse(x==pos, 1, 0))), levels=c(1, 0))
+#learner <- lrn('classif.ranger', predict_type='prob')
+#result <- train_and_test(dataset, imputer=impute_basic, learner=learner, target=target, positive='1', title=paste0(name, ' + basic (median/mode)'))
