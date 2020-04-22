@@ -18,9 +18,10 @@ ids <- gsub("./datasets(/openml_dataset_)?", "", ids)
 ids <- na.omit(as.numeric(ids))
 ```
 
-Here is a nice description of what this report contains.
+The purpose of the report is to aggregate and examine selected techniques of imputation of missing data in the context of their impact on the prediction efficiency of classification algorithms. The following considerations include various imputation techniques, both basic (median / mode imputation) and more sophisticated (selected methods from the missForest, VIM, mice or missMDA packages).   
+For testing purposes, as the classification algorithm, we used the ranger algorithm, which is a fast implementation of random forests, particularly suited for high dimensional data. The prediction effectiveness was assessed in relation to the AUC, balanced accuracy and Matthews correlation coefficient measures.
 
-Below, are all the results, grouped by package and dataset. Example:
+The report contains, all the results, grouped by both: package and dataset.
 
 <details>
   <summary>basic (median/mode)</summary>
