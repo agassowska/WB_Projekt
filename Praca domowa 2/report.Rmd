@@ -26,12 +26,26 @@ The report contains, all the results, grouped by both: package and dataset.
 <details>
   <summary>basic (median/mode)</summary>
   
-```{r basic, include=FALSE}
-src <- lapply(ids, function(id) knit_expand(file='./templates/basic.Rmd'))
+```{r basic, include=FALSE, cache=TRUE}
+src1 <- lapply(ids, function(id) knit_expand(file='./templates/basic.Rmd'))
 ```
 
-`r knit(text=unlist(src))`
+`r knit(text=unlist(src1))`
 
 </details> 
 
 At the end are plots summarizing results of all packets tested on all datasets. Probably some commentary too.
+
+<details>
+  <summary>missRanger</summary>
+  
+```{r missRanger, include=FALSE, cache=TRUE}
+src2 <- lapply(ids, function(id) knit_expand(file='./templates/missRanger.Rmd'))
+```
+
+`r knit(text=unlist(src2))`
+
+</details> 
+
+At the end are plots summarizing results of all packets tested on all datasets. Probably some commentary too.
+

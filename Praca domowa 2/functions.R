@@ -13,6 +13,7 @@ library(missForest)
 library(VIM)
 library(mice)
 library(missMDA)
+library(missRanger)
 
 library(mlr3)
 library(mlr3learners)
@@ -67,9 +68,16 @@ impute_basic <- function(dataset) {
   return(data.frame(impute(dataset, method='median/mode')))
 }
 
+# nie chce działać dla zbiorów: 6332, 40536, 41278, z powodu zbyt dużej liczby poziomów
 impute_missforest <- function(dataset) {
   data.imp <- missForest(dataset)
   return(data.imp$ximp)
+}
+
+# alternatywny missforest działajacy dla danych wielowymiarowych:
+impute_missRanger <- function(dataset){
+  imputed <- missRanger(dataset, maxiter = 1)
+  return(imputed)
 }
 
 impute_VIM_irmi <- function(dataset) {
