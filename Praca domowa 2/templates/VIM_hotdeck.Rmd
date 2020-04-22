@@ -1,4 +1,4 @@
-```{r missRanger_{{id}}, include=FALSE, warning=FALSE, message=FALSE}
+```{r VIM_hotdeck_{{id}}, include=FALSE, warning=FALSE, message=FALSE}
 load_result <- load({{id}})
 
 name <- load_result$name
@@ -10,10 +10,10 @@ dataset[, target] <- factor(unlist(lapply(dataset[, target], function(x) ifelse(
 colnames(dataset) <- make.names(colnames(dataset),unique = T)
 
 learner <- lrn('classif.ranger', predict_type='prob', num.trees = 100)
-result <- train_and_test(dataset, imputer=impute_missRanger, learner=learner, target=target, positive='1', title=paste0(name, ' + missRanger'))
+result <- train_and_test(dataset, imputer=impute_VIM_hotdeck, learner=learner, target=target, positive='1', title=paste0(name, ' + VIM_hotdeck'))
 
-time_data[nrow(time_data)+1, ] <- c('missRanger', name, result$train_dataset_imputation_time, result$test_dataset_imputation_time)
-test_data[nrow(test_data)+1, ] <- c('missRanger', name, result$test_auc, result$test_bacc, result$test_mcc)
+time_data[nrow(time_data)+1, ] <- c('VIM_hotdeck', name, result$train_dataset_imputation_time, result$test_dataset_imputation_time)
+test_data[nrow(test_data)+1, ] <- c('VIM_hotdeck', name, result$test_auc, result$test_bacc, result$test_mcc)
 ```
 
 <div class="tab">
@@ -24,20 +24,20 @@ test_data[nrow(test_data)+1, ] <- c('missRanger', name, result$test_auc, result$
 </div>
 
 <div id="Crossvalidation results" class="tabcontent">
-```{r missRanger_{{id}}_crossvalidation, echo=FALSE, fig.align='center', fig.width=10, fig.height=5, out.width='100%', warning=FALSE, message=FALSE}
+```{r VIM_hotdeck_{{id}}_crossvalidation, echo=FALSE, fig.align='center', fig.width=10, fig.height=5, out.width='100%', warning=FALSE, message=FALSE}
 result$cv_plot
 ```
 </div>
 
 <div id="Imputation times" class="tabcontent">
-```{r missRanger_{{id}}_times, echo=FALSE}
+```{r VIM_hotdeck_{{id}}_times, echo=FALSE}
 cat(paste('Train set imputation time: ', round(result$train_dataset_imputation_time, 3)))
 cat(paste('Test set imputation time: ', round(result$test_dataset_imputation_time, 3)))
 ```
 </div>
 
 <div id="Test set results" class="tabcontent">
-```{r missRanger_{{id}}_measures, echo=FALSE}
+```{r VIM_hotdeck_{{id}}_measures, echo=FALSE}
 cat(paste('Test set AUC: ', round(result$test_auc, 3)))
 cat(paste('Test set BACC: ', round(result$test_bacc, 3)))
 cat(paste('Test set MCC: ', round(result$test_mcc, 3)))
@@ -45,7 +45,7 @@ cat(paste('Test set MCC: ', round(result$test_mcc, 3)))
 </div>
 
 <div id="Missings overview" class="tabcontent">
-```{r missRanger_{{id}}_overview, echo=FALSE, fig.align='center', fig.width=8, fig.height=6, warning=FALSE, message=FALSE}
+```{r VIM_hotdeck_{{id}}_overview, echo=FALSE, fig.align='center', fig.width=8, fig.height=6, warning=FALSE, message=FALSE}
 gg_miss_var(dataset, show_pct=TRUE)
 ```
 </div>

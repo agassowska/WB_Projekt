@@ -68,6 +68,12 @@ impute_basic <- function(dataset) {
   return(data.frame(impute(dataset, method='median/mode')))
 }
 
+impute_missMDA <- function(dataset) {
+  nb <- estim_ncpFAMD(dataset, nbsim=5)
+  res.comp <- imputeFAMD(dataset, nb$ncp)
+  return(res.comp$completeObs)
+}
+
 # nie chce działać dla zbiorów: 6332, 40536, 41278, z powodu zbyt dużej liczby poziomów
 impute_missforest <- function(dataset) {
   data.imp <- missForest(dataset)
@@ -76,12 +82,8 @@ impute_missforest <- function(dataset) {
 
 # alternatywny missforest działajacy dla danych wielowymiarowych:
 impute_missRanger <- function(dataset){
-  imputed <- missRanger(dataset, maxiter = 1)
+  imputed <- missRanger(dataset)
   return(imputed)
-}
-
-impute_VIM_irmi <- function(dataset) {
-  return(irmi(dataset, imp_var=FALSE))
 }
 
 impute_VIM_knn <- function(dataset) {
@@ -93,13 +95,13 @@ impute_VIM_hotdeck <- function(dataset) {
 }
 
 impute_mice <- function(dataset) {
-  return(complete(mice(dataset)))
+  return(mice::complete(mice(dataset, nnet.MaxNWts = 3000)))
 }
 
-impute_missMDA <- function(dataset) {
-  nb <- estim_ncpFAMD(dataset, nbsim=5)
-  res.comp <- imputeFAMD(dataset, nb$ncp)
-  return(res.comp$completeObs)
+
+# dla id = 6332 rzuca błąd: Error in 1L:ncol(Y) : argument of length 0
+impute_VIM_irmi <- function(dataset) {
+  return(irmi(dataset, imp_var=FALSE))
 }
 
 # ---
