@@ -15,36 +15,28 @@ result <- train_and_test(dataset, imputer=impute_mice, learner=learner, target=t
 time_data[nrow(time_data)+1, ] <- c('mice', name, result$train_dataset_imputation_time, result$test_dataset_imputation_time)
 test_data[nrow(test_data)+1, ] <- c('mice', name, result$test_auc, result$test_bacc, result$test_mcc)
 ```
-<div class="tab">
-  <button class="btn btn-primary" onclick="openCity(event, 'Crossvalidation results')">Crossvalidation results</button>
-  <button class="btn btn-primary" onclick="openCity(event, 'Imputation times')">Imputation times</button>
-  <button class="btn btn-primary" onclick="openCity(event, 'Test set results')">Test set results</button>
-  <button class="btn btn-primary" onclick="openCity(event, 'Missings overview')">Missing overview</button>
-</div>
 
-<div id="Crossvalidation results" class="tabcontent">
+### `r name` {.tabset .tabset-fade .tabset-pills}
+
+#### Crossvalidation results
 ```{r mice_{{id}}_crossvalidation, echo=FALSE, fig.align='center', fig.width=10, fig.height=5, out.width='100%', warning=FALSE, message=FALSE}
 result$cv_plot
 ```
-</div>
 
-<div id="Imputation times" class="tabcontent">
+#### Imputation times
 ```{r mice_{{id}}_times, echo=FALSE}
 cat(paste('Train set imputation time: ', round(result$train_dataset_imputation_time, 3)))
 cat(paste('Test set imputation time: ', round(result$test_dataset_imputation_time, 3)))
 ```
-</div>
 
-<div id="Test set results" class="tabcontent">
+#### Test set results
 ```{r mice_{{id}}_measures, echo=FALSE}
 cat(paste('Test set AUC: ', round(result$test_auc, 3)))
 cat(paste('Test set BACC: ', round(result$test_bacc, 3)))
 cat(paste('Test set MCC: ', round(result$test_mcc, 3)))
 ```
-</div>
 
-<div id="Missings overview" class="tabcontent">
+#### Missings overview
 ```{r mice_{{id}}_overview, echo=FALSE, fig.align='center', fig.width=8, fig.height=6, warning=FALSE, message=FALSE}
 gg_miss_var(dataset, show_pct=TRUE)
 ```
-</div>

@@ -1,8 +1,14 @@
 ---
 title: "Praca domowa 2"
 author: "Ada Gąssowska, Mateusz Grzyb, Elżbieta Jowik"
-output: html_document
-css: styles.css
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+    toc_collapsed: true
+toc_depth: 3
+number_sections: true
+theme: lumen
 ---
 
 ```{r setup, include=FALSE}
@@ -15,43 +21,26 @@ test_data <- data.frame(package=character(), dataset=character(),
                         test_auc=numeric(), test_bacc=numeric(), test_mcc=numeric(), stringsAsFactors=FALSE)
 ids <- list.dirs(path='./datasets', full.names=TRUE)
 ids <- gsub("./datasets(/openml_dataset_)?", "", ids)
-ids <- na.omit(as.numeric(ids))[c(2,3)]
+ids <- na.omit(as.numeric(ids))
 ```
 
 The purpose of the report is to aggregate and examine selected techniques of imputation of missing data in the context of their impact on the prediction efficiency of classification algorithms. The following considerations include various imputation techniques, both basic (median / mode imputation) and more sophisticated (selected methods from the missForest, VIM, mice or missMDA packages).   
 For testing purposes, as the classification algorithm, we used the ranger algorithm, which is a fast implementation of random forests, particularly suited for high dimensional data. The prediction effectiveness was assessed in relation to the AUC, balanced accuracy and Matthews correlation coefficient measures.
 
-The report contains all the results, grouped by both package and dataset.
+The report contains, all the results, grouped by both: package and dataset.
 
+## Basic (median/mode)
+  
 ```{r basic, include=FALSE}
 src1 <- lapply(ids, function(id) knit_expand(file='./templates/basic.Rmd'))
-res1 <- knit_child(text=unlist(src1))
-res1 <- paste('<button class="btn btn-primary" data-toggle="collapse" data-target="#BlockName"> Show/Hide </button><div id="BlockName" class="collapse">', gsub('^\\s*|\\s*$', '', res1), '</div>', sep = '')
 ```
 
-`r res1`
+`r knit(text=unlist(src1))`
 
 At the end are plots summarizing results of all packets tested on all datasets. Probably some commentary too.
 
-```{js, echo=FALSE}
-function openCity(evt, cityName) {
-  // Declare all variables
-  var i, tabcontent, tablinks;
-
-  // Get all elements with class="tabcontent" and hide them
-  tabcontent = document.getElementsByClassName("tabcontent");
-  for (i = 0; i < tabcontent.length; i++) {
-    tabcontent[i].style.display = "none";
-  }
-
-  // Get all elements with class="tablinks" and remove the class "active"
-  tablinks = document.getElementsByClassName("tablinks");
-  for (i = 0; i < tablinks.length; i++) {
-    tablinks[i].className = tablinks[i].className.replace(" active", "");
-  }
-
-  // Show the current tab, and add an "active" class to the button that opened the tab
-  document.getElementById(cityName).style.display = "block";
-  evt.currentTarget.className += " active";
-} 
+```{r save results, include=FALSE}
+# dump results to file, just in case
+write.csv(time_data, "time_data.csv", row.names=FALSE)
+write.csv(test_data, "test_data.csv", row.names=FALSE)
 ```
