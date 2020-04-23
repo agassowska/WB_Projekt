@@ -22,6 +22,7 @@ library(mlr3viz)
 
 #devtools::install_github("jabiru/tictoc")
 library(tictoc)
+library(stringr)
 
 
 # ------
@@ -68,21 +69,9 @@ impute_basic <- function(dataset) {
   return(data.frame(impute(dataset, method='median/mode')))
 }
 
-impute_missMDA <- function(dataset) {
-  nb <- estim_ncpFAMD(dataset, nbsim=5)
-  res.comp <- imputeFAMD(dataset, nb$ncp)
-  return(res.comp$completeObs)
-}
-
-# nie chce działać dla zbiorów: 6332, 40536, 41278, z powodu zbyt dużej liczby poziomów
-impute_missforest <- function(dataset) {
-  data.imp <- missForest(dataset)
-  return(data.imp$ximp)
-}
-
 # alternatywny missforest działajacy dla danych wielowymiarowych:
 impute_missRanger <- function(dataset){
-  imputed <- missRanger(dataset)
+  imputed <- missRanger(dataset, maxiter = 1)
   return(imputed)
 }
 
@@ -95,7 +84,21 @@ impute_VIM_hotdeck <- function(dataset) {
 }
 
 impute_mice <- function(dataset) {
-  return(mice::complete(mice(dataset, nnet.MaxNWts = 3000)))
+  missings <- is.na(dataset)
+  return(mice::complete(mice(dataset, nnet.MaxNWts = 3000, diagnostics = FALSE, remove_collinear = FALSE, m = 1, maxit = 1, method = 'pmm', where = missings)))
+}
+
+impute_missMDA <- function(dataset) {
+  nb <- estim_ncpFAMD(dataset, ncp.max = 0, nbsim = 10, method.cv = 'Kfold')
+  imputed_df <- imputeFAMD(dataset, ncp = nb$ncp)
+  result_df <- imputed_df$completeObs
+  return(result_df)
+}
+
+# nie chce działać dla zbiorów: 6332, 40536, 41278, z powodu zbyt dużej liczby poziomów
+impute_missforest <- function(dataset) {
+  data.imp <- missForest(dataset)
+  return(data.imp$ximp)
 }
 
 
