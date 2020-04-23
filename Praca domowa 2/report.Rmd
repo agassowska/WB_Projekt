@@ -35,12 +35,44 @@ The report contains, all the results, grouped by both: package and dataset.
 src1 <- lapply(ids, function(id) knit_expand(file='./templates/basic.Rmd'))
 ```
 
-`r knit(text=unlist(src1))`
+`r knit(text=unlist(src1))`    
 
-At the end are plots summarizing results of all packets tested on all datasets. Probably some commentary too.
+## Mice
+
+```{r mice, include=FALSE}
+src5 <- lapply(ids, function(id) knit_expand(file='./templates/mice.Rmd'))
+```
+
+`r knit(text=unlist(src5))`  
+
+
+## K-Nearest Neighbors (VIM)
+  
+```{r VIM_knn, include=FALSE}
+src2 <- lapply(ids, function(id) knit_expand(file='./templates/VIM_knn.Rmd'))
+```
+
+`r knit(text=unlist(src2))`  
+
+## Hot Deck (VIM)
+  
+```{r VIM_hotdeck, include=FALSE}
+src3 <- lapply(ids, function(id) knit_expand(file='./templates/VIM_hotdeck.Rmd'))
+```
+
+`r knit(text=unlist(src3))`   
+
+## MissRanger
+  
+```{r missRanger, include=FALSE}
+src5 <- lapply(ids, function(id) knit_expand(file='./templates/missRanger.Rmd'))
+```
+
+`r knit(text=unlist(src5))`  
+
 
 ```{r save results, include=FALSE}
 # dump results to file, just in case
-write.csv(time_data, "time_data.csv", row.names=FALSE)
-write.csv(test_data, "test_data.csv", row.names=FALSE)
+write.csv(time_data, "timedata.csv", row.names=FALSE)
+write.csv(test_data, "testdata.csv", row.names=FALSE)
 ```
