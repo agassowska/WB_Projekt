@@ -67,30 +67,39 @@ inner_load <- function(dir) {
 
 # takes clean dataset with missing values (additional arguments must have default values) and returns an imputed dataset
 
+fix_names <- function(dataset){
+  names(dataset)<-str_replace_all(names(dataset), pattern = " ", replacement = "")
+  colnames(dataset) <- make.names(colnames(dataset),unique = T)
+}
+
 impute_basic <- function(dataset) {
+  fix_names(dataset)
   return(data.frame(impute(dataset, method='median/mode')))
 }
 
 # alternatywny missforest działajacy dla danych wielowymiarowych:
 impute_missRanger <- function(dataset){
+  fix_names(dataset)
   imputed <- missRanger(dataset, maxiter = 5)
   return(imputed)
 }
 
 impute_VIM_knn <- function(dataset) {
+  fix_names(dataset)
   return(kNN(dataset, imp_var=FALSE))
 }
 
 impute_VIM_hotdeck <- function(dataset) {
+  fix_names(dataset)
   return(hotdeck(dataset, imp_var=FALSE))
 }
 
 impute_mice <- function(dataset) {
   # jeden ze zbiorów ma spację w nazwie
-  names(dataset)<-str_replace_all(names(dataset), pattern = " ", replacement = "")
+  fix_names(dataset)
   missings <- is.na(dataset)
-        return(mice::complete(parlmice(datsa=dataset, nnet.MaxNWts = 3000, diagnostics=FALSE,
-                                       remove_collinear=FALSE, method='pmm', where=missings, cl.type='FORK')))
+  return(mice::complete(mice(data=dataset, nnet.MaxNWts = 3000, diagnostics=FALSE,
+                                       remove_collinear=FALSE, method='pmm', where=missings)))
 }
 
 # nie jest zbiezny dla wszystkich zbiorow
@@ -103,6 +112,7 @@ impute_missMDA <- function(dataset) {
 
 # nie chce działać dla zbiorów: 6332, 40536, 41278, z powodu zbyt dużej liczby poziomów
 impute_missforest <- function(dataset) {
+  
   data.imp <- missForest(dataset)
   return(data.imp$ximp)
 }
@@ -113,6 +123,7 @@ impute_VIM_irmi <- function(dataset) {
 }
 
 impute_softImpute_mode <- function(dataset) {
+  fix_names(dataset)
   factors <- unlist(lapply(dataset, is.factor))
   num_imp <- softImpute::complete(dataset[!factors], softImpute(dataset[!factors],trace=TRUE,type="svd"))
   fact_imp <- impute(dataset[factors], method="median/mode")
