@@ -85,11 +85,6 @@ inner_load_imputed <- function(id, package) {
 
 # takes clean dataset with missing values (additional arguments must have default values) and returns an imputed dataset
 
-fix_names <- function(dataset){
-  names(dataset)<-str_replace_all(names(dataset), pattern = " ", replacement = "")
-  colnames(dataset) <- make.names(colnames(dataset),unique = T)
-}
-
 impute_basic <- function(dataset) {
   dataset_imputed <- data.frame(impute(dataset, method='median/mode'))
   
@@ -116,6 +111,8 @@ impute_VIM_hotdeck <- function(dataset) {
 }
 
 impute_mice <- function(dataset) {
+  names(dataset) <- str_replace_all(names(dataset), pattern = " ", replacement = "")
+  colnames(dataset) <- make.names(colnames(dataset), unique = T)
   # jeden ze zbiorów ma spację w nazwie
   fix_names(dataset)
   missings <- is.na(dataset)
