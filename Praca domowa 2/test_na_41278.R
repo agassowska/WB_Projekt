@@ -1,28 +1,4 @@
-# Potrzebne funkcje
-load <- function(id) {
-  dirs <- list.dirs(path='./datasets', full.names=TRUE)
-  dir <- dirs[grep(paste0('./datasets/openml_dataset_', id), dirs)]
-  
-  result <- inner_load(dir)
-  
-  return(result)
-}
 
-inner_load <- function(dir) {
-  wd <- getwd()
-  setwd(dir)
-  
-  surogate_env=new.env(parent=.BaseNamespaceEnv)
-  attach(surogate_env)
-  source('code.R', surogate_env)
-  name <- surogate_env$data_name
-  dataset <- surogate_env$dataset
-  target <- surogate_env$target_column
-  
-  setwd(wd)
-  
-  return(list(name=name, dataset=dataset, target=target))
-}
 
 impute_mice <- function(dataset) {
   # jeden ze zbiorów ma spację w nazwie

@@ -84,6 +84,8 @@ impute_VIM_hotdeck <- function(dataset) {
 }
 
 impute_mice <- function(dataset) {
+  # jeden ze zbiorów ma spację w nazwie
+  names(dataset)<-str_replace_all(names(dataset), pattern = " ", replacement = "")
   missings <- is.na(dataset)
   return(mice::complete(mice(dataset, nnet.MaxNWts = 3000, diagnostics = FALSE, remove_collinear = FALSE, method = 'pmm', where = missings)))
 }
