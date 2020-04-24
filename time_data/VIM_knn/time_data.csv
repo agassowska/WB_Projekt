@@ -1,0 +1,8 @@
+"package","dataset","imputation_time"
+"VIM_knn","adult","95.437"
+"VIM_knn","eucalyptus","0.329999999999984"
+"VIM_knn","dresses-sales","0.480999999999995"
+"VIM_knn","credit-approval","0.157999999999959"
+"VIM_knn","sick","5.58199999999999"
+"VIM_knn","SpeedDating","237.384"
+"VIM_knn","cylinder-bands","1.17499999999995"

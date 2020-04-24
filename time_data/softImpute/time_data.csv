@@ -1,0 +1,8 @@
+"package","dataset","imputation_time"
+"softImpute","adult","0.0860000000000127"
+"softImpute","eucalyptus","0.0119999999999436"
+"softImpute","dresses-sales","0.0250000000000909"
+"softImpute","credit-approval","0.0109999999999673"
+"softImpute","sick","0.101000000000113"
+"softImpute","SpeedDating","1.20299999999997"
+"softImpute","cylinder-bands","0.0259999999998399"

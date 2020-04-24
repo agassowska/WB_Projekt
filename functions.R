@@ -4,18 +4,14 @@
 library(OpenML)
 
 library(ggplot2)
-library(visdat)
 library(naniar)
 library(patchwork)
 
-library(VIM)
-library(mice)
-library(missRanger)
-library(softImpute)
 library(imputeMissings)
-
-library(missForest)
-library(missMDA)
+library(softImpute)
+library(missRanger)
+library(mice)
+library(VIM)
 
 library(mlr3)
 library(mlr3learners)
@@ -26,27 +22,26 @@ library(mlr3viz)
 library(tictoc)
 library(stringr)
 
-
 # ------
 # functions
 
 # ---
-# load function
+# load_raw function
 
 # takes dataset id and returns a list of length of 2:
 # - name - name of the dataset
 # - dataset - processed dataset
+# - target - target variable
 
-load <- function(id) {
-  dirs <- list.dirs(path='./datasets', full.names=TRUE)
-  dir <- dirs[grep(paste0('./datasets/openml_dataset_', id), dirs)]
-  
-  result <- inner_load(dir)
+load_raw <- function(id) {
+  dirs <- list.dirs(path='./datasets_raw', full.names=TRUE)
+  dir <- dirs[grep(paste0('./datasets_raw/openml_dataset_', id), dirs)]
+  result <- inner_load_raw(dir)
   
   return(result)
 }
 
-inner_load <- function(dir) {
+inner_load_raw <- function(dir) {
   wd <- getwd()
   setwd(dir)
   
@@ -63,78 +58,131 @@ inner_load <- function(dir) {
 }
 
 # ---
+# load_imputed functions
+
+# takes dataset id and set ('train' or 'test') returns an imputed dataset (train or test)
+
+load_imputed <- function(id, package) {
+  result <- inner_load_imputed(id, package)
+  train <- result$train
+  test <- result$test
+  result_raw <- load_raw(id)
+  name <- result_raw$name
+  target <- result_raw$target
+  
+  return(list(name=name, train=train, test=test, target=target))
+}
+
+inner_load_imputed <- function(id, package) {
+  train <- read.csv(paste0('datasets_imputed/', package, '/', id, '_train.csv'))
+  test <- read.csv(paste0('datasets_imputed/', package, '/', id, '_test.csv'))
+  
+  return(list(train=train, test=test))
+}
+
+# ---
 # impute functions
 
 # takes clean dataset with missing values (additional arguments must have default values) and returns an imputed dataset
 
 impute_basic <- function(dataset) {
-  return(data.frame(impute(dataset, method='median/mode')))
+  dataset_imputed <- data.frame(impute(dataset, method='median/mode'))
+  
+  return(dataset_imputed)
 }
 
-# alternatywny missforest działajacy dla danych wielowymiarowych:
-impute_missRanger <- function(dataset){
-  imputed <- missRanger(dataset, maxiter = 5)
-  return(imputed)
+impute_missRanger <- function(dataset) {
+  colnames(dataset) <- make.names(colnames(dataset), unique=T)
+  dataset_imputed <- missRanger(dataset, maxiter=5)
+  
+  return(dataset_imputed)
 }
 
 impute_VIM_knn <- function(dataset) {
-  return(kNN(dataset, imp_var=FALSE))
+  dataset_imputed <- kNN(dataset, imp_var=FALSE, trace=TRUE)
+  
+  return(dataset_imputed)
 }
 
 impute_VIM_hotdeck <- function(dataset) {
-  return(hotdeck(dataset, imp_var=FALSE))
+  dataset_imputed <- hotdeck(dataset, imp_var=FALSE, trace=TRUE)
+  
+  return(dataset_imputed)
 }
 
 impute_mice <- function(dataset) {
-  # jeden ze zbiorów ma spację w nazwie
   names(dataset)<-str_replace_all(names(dataset), pattern = " ", replacement = "")
-  missings <- is.na(dataset)
-        return(mice::complete(parlmice(datsa=dataset, nnet.MaxNWts = 3000, diagnostics=FALSE,
-                                       remove_collinear=FALSE, method='pmm', where=missings, cl.type='FORK')))
-}
-
-# nie jest zbiezny dla wszystkich zbiorow
-impute_missMDA <- function(dataset) {
-  nb <- estim_ncpFAMD(dataset, ncp.max = 0, nbsim = 10, method.cv = 'Kfold')
-  imputed_df <- imputeFAMD(dataset, ncp = nb$ncp)
-  result_df <- imputed_df$completeObs
-  return(result_df)
-}
-
-# nie chce działać dla zbiorów: 6332, 40536, 41278, z powodu zbyt dużej liczby poziomów
-impute_missforest <- function(dataset) {
-  data.imp <- missForest(dataset)
-  return(data.imp$ximp)
-}
-
-# dla id = 6332 rzuca błąd: Error in 1L:ncol(Y) : argument of length 0
-impute_VIM_irmi <- function(dataset) {
-  return(irmi(dataset, imp_var=FALSE))
+  imp <- mice(data=dataset, remove_collinear=FALSE, method='pmm', printFlag=TRUE)
+  
+  return(complete(imp))
 }
 
 impute_softImpute_mode <- function(dataset) {
   factors <- unlist(lapply(dataset, is.factor))
-  num_imp <- softImpute::complete(dataset[!factors], softImpute(dataset[!factors],trace=TRUE,type="svd"))
-  fact_imp <- impute(dataset[factors], method="median/mode")
-  df <- cbind(fact_imp, num_imp)
-  return(df)
+  num_imp <- softImpute::complete(dataset[!factors], softImpute(dataset[!factors], trace=TRUE, type='svd'))
+  fact_imp <- imputeMissings::impute(dataset[factors], method='median/mode')
+  dataset_imputed <- cbind(fact_imp, num_imp)
+  
+  return(dataset_imputed)
+}
+
+# ---
+# split_and_impute function
+
+# takes:
+# - id - id of dataset to split and impute
+# - imputer - impute function
+# - train_size - size (0-1) of train set (default value is 0.8)
+# - save - whether to save imputed datasets to datasets_imputed
+# returns:
+# train - imputed train dataset
+# test - imputed test dataet
+# time - total imputation time
+
+split_and_impute <- function(id, imputer, package, train_size=0.8, save=TRUE) {
+  load_result <- load_raw(id)
+  dataset <- load_result$dataset
+  target <- load_result$target
+
+  train_set <- sample(nrow(dataset), 0.8*nrow(dataset))
+  test_set <- setdiff(seq_len(nrow(dataset)), train_set)
+  
+  tic('imputation')
+  
+  train_dataset <- imputer(dataset[train_set, !(colnames(dataset) %in% c(target))])
+  tarcol1 <- data.frame(dataset[train_set, target])
+  colnames(tarcol1) <- target
+  train_dataset <- cbind(train_dataset, tarcol1)
+
+  test_dataset <- imputer(dataset[test_set, !(colnames(dataset) %in% c(target))])
+  tarcol2 <- data.frame(dataset[test_set, target])
+  colnames(tarcol2) <- target
+  test_dataset <- cbind(test_dataset, tarcol2)
+  
+  times <- toc()
+  
+  imputation_time <- times$toc-times$tic
+  
+  if(save) {
+    write.csv(x=train_dataset, file=paste0('./datasets_imputed/', package, '/', id, '_train.csv'),row.names=FALSE)
+    write.csv(x=test_dataset, file=paste0('./datasets_imputed/', package, '/', id, '_test.csv'),row.names=FALSE)
+  }
+  
+  return(list(train=train_dataset, test=test_dataset, time=imputation_time[['elapsed']]))
 }
 
 # ---
 # train_and_test function
 
 # takes:
-# - dataset - clean dataset with missing values
-# - imputer - a function from 'impute functions' section
+# - train - imputed train dataset without missing values
+# - test - imputed test dataset without missing values
 # - learner - a classification learner from mlr3learners (must return probabilities)
 # - target - name of target variable in dataset
 # - postive - label of positive class (defalut value is '1')
 # - folds - number of fold used for crossvalidation (default value is 5)
-# - train_size - size (0-1) of train set (default value is 0.8)
 # - title - title for crossvalidation metrics plot (default value is no title)
 # returns:
-# - train_dataset_imputation_time - time it took to impute train set with imputer function
-# - test_dataset_imputation_time - time it took to impute test set with imputer function
 # - cv_plot - plot of ROC, AUC, BACC, MCC achieved during crossvalidation stage
 # - mean_auc - mean AUC achieved during crossvalidation stage
 # - mean_bacc - mean BACC achieved during crossvalidation stage
@@ -144,31 +192,14 @@ impute_softImpute_mode <- function(dataset) {
 # - test_mmc - MCC achievied druing test stage
 # - learner - learner trained on whole train set
 
-train_and_test <- function(dataset, imputer, learner, target, positive='1', folds=5, train_size=0.8, title='') {
-  # train/test split
-  train_set <- sample(nrow(dataset), 0.8*nrow(dataset))
-  test_set <- setdiff(seq_len(nrow(dataset)), train_set)
-  
-  # imputation of train/test sets with imputer function (each set is imputed individually)
-  tic('train dataset imputation')
-  train_dataset <- imputer(dataset[train_set, !(colnames(dataset) %in% c(target))])
-  times <- toc()
-  train_dataset_imputation_time <- times$toc-times$tic
-  tarcol1 <- data.frame(dataset[train_set, target])
-  colnames(tarcol1) <- target
-  train_dataset <- cbind(train_dataset, tarcol1)
-    
-  tic('test dataset imputation')
-  test_dataset <- imputer(dataset[test_set, !(colnames(dataset) %in% c(target))])
-  times <- toc()
-  test_dataset_imputation_time <- times$toc-times$tic
-  tarcol2 <- data.frame(dataset[test_set, target])
-  colnames(tarcol2) <- target
-  test_dataset <- cbind(test_dataset, tarcol2)
-  
+train_and_test <- function(train, test, learner, target, positive='1', folds=5, title='') {
+  pos=train[1, target]
+  train[, target] <- factor(unlist(lapply(train[, target], function(x) ifelse(x==pos, 1, 0))), levels=c(1, 0))
+  pos=test[1, target]
+  test[, target] <- factor(unlist(lapply(test[, target], function(x) ifelse(x==pos, 1, 0))), levels=c(1, 0))
   # crossvalidation
   resampling <- rsmp("cv", folds=folds)
-  task_cv <- TaskClassif$new(id='task_cv', backend=train_dataset, target=target, positive=positive)
+  task_cv <- TaskClassif$new(id='task_cv', backend=train, target=target, positive=positive)
   
   rr <- resample(task_cv, learner, resampling, store_models=TRUE)
   
@@ -229,10 +260,10 @@ train_and_test <- function(dataset, imputer, learner, target, positive='1', fold
   plot <- p1 + temp + plot_annotation(title=title)
   
   # testing on test set
-  task_train <- TaskClassif$new(id='task_train', backend=train_dataset, target=target, positive=positive)
+  task_train <- TaskClassif$new(id='task_train', backend=train, target=target, positive=positive)
   learner$train(task_train)
   
-  task_predict <- TaskClassif$new(id='task_predict', backend=test_dataset, target=target, positive=positive)
+  task_predict <- TaskClassif$new(id='task_predict', backend=test, target=target, positive=positive)
   prediction <- learner$predict(task_predict)
   
   test_auc <- prediction$score(msr('classif.auc'))
@@ -240,9 +271,7 @@ train_and_test <- function(dataset, imputer, learner, target, positive='1', fold
   test_mcc <- prediction$score(msr('classif.mcc'))
   
   # returning all values
-  return(list(train_dataset_imputation_time=train_dataset_imputation_time[['elapsed']],
-              test_dataset_imputation_time=test_dataset_imputation_time[['elapsed']],
-              cv_plot=plot, mean_auc=mean_auc, mean_bacc=mean_bacc, mean_mcc=mean_mcc,
+  return(list(cv_plot=plot, mean_auc=mean_auc, mean_bacc=mean_bacc, mean_mcc=mean_mcc,
               test_auc=test_auc[['classif.auc']], test_bacc=test_bacc[['classif.bacc']], test_mcc=test_mcc[['classif.mcc']],
               learner=learner))
 }

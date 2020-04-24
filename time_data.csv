@@ -1,7 +1,0 @@
-"package","dataset","train_set_imputation_time","test_set_imputation_time"
-"basic_(median/mode)","eucalyptus","0.00399999999999956","0.00300000000000011"
-"mice","eucalyptus","1.877","0.953000000000001"
-"VIM_knn","eucalyptus","0.227","0.0719999999999992"
-"VIM_hotdeck","eucalyptus","0.0280000000000005","0.0249999999999986"
-"missRanger","eucalyptus","1.255","0.487"
-"softImpute","eucalyptus","0.00700000000000145","0.00999999999999801"

@@ -1,0 +1,8 @@
+"package","dataset","imputation_time"
+"missRanger","adult","33.8559999999998"
+"missRanger","eucalyptus","2.13100000000122"
+"missRanger","dresses-sales","1.80600000000413"
+"missRanger","credit-approval","1.53399999999965"
+"missRanger","sick","10.265999999996"
+"missRanger","SpeedDating","454.953999999998"
+"missRanger","cylinder-bands","6.06200000000536"
