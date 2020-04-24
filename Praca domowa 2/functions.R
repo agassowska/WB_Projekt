@@ -71,7 +71,7 @@ impute_basic <- function(dataset) {
 
 # alternatywny missforest działajacy dla danych wielowymiarowych:
 impute_missRanger <- function(dataset){
-  imputed <- missRanger(dataset, maxiter = 1)
+  imputed <- missRanger(dataset, maxiter = 5)
   return(imputed)
 }
 
@@ -85,7 +85,7 @@ impute_VIM_hotdeck <- function(dataset) {
 
 impute_mice <- function(dataset) {
   missings <- is.na(dataset)
-  return(mice::complete(mice(dataset, nnet.MaxNWts = 3000, diagnostics = FALSE, remove_collinear = FALSE, m = 1, maxit = 1, method = 'pmm', where = missings)))
+  return(mice::complete(mice(dataset, nnet.MaxNWts = 3000, diagnostics = FALSE, remove_collinear = FALSE, method = 'pmm', where = missings)))
 }
 
 impute_missMDA <- function(dataset) {
