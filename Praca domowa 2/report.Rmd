@@ -73,6 +73,6 @@ src5 <- lapply(ids, function(id) knit_expand(file='./templates/missRanger.Rmd'))
 
 ```{r save results, include=FALSE}
 # dump results to file, just in case
-write.csv(time_data, "timedata.csv", row.names=FALSE)
-write.csv(test_data, "testdata.csv", row.names=FALSE)
+write.csv(time_data, "time_data.csv", row.names=FALSE)
+write.csv(test_data, "test_data.csv", row.names=FALSE)
 ```

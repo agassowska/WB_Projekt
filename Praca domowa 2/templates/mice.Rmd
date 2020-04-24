@@ -3,6 +3,7 @@ load_result <- load({{id}})
 
 name <- load_result$name
 dataset <- load_result$dataset
+names(dataset)<-str_replace_all(names(dataset), pattern = " ", replacement = "")
 target <- load_result$target
 
 pos=dataset[1, target]
