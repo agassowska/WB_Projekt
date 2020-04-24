@@ -8,12 +8,14 @@ library(visdat)
 library(naniar)
 library(patchwork)
 
-library(imputeMissings)
-library(missForest)
 library(VIM)
 library(mice)
-library(missMDA)
 library(missRanger)
+library(softImpute)
+library(imputeMissings)
+
+library(missForest)
+library(missMDA)
 
 library(mlr3)
 library(mlr3learners)
@@ -87,9 +89,11 @@ impute_mice <- function(dataset) {
   # jeden ze zbiorów ma spację w nazwie
   names(dataset)<-str_replace_all(names(dataset), pattern = " ", replacement = "")
   missings <- is.na(dataset)
-  return(mice::complete(mice(dataset, nnet.MaxNWts = 3000, diagnostics = FALSE, remove_collinear = FALSE, method = 'pmm', where = missings)))
+        return(mice::complete(parlmice(datsa=dataset, nnet.MaxNWts = 3000, diagnostics=FALSE,
+                                       remove_collinear=FALSE, method='pmm', where=missings, cl.type='FORK')))
 }
 
+# nie jest zbiezny dla wszystkich zbiorow
 impute_missMDA <- function(dataset) {
   nb <- estim_ncpFAMD(dataset, ncp.max = 0, nbsim = 10, method.cv = 'Kfold')
   imputed_df <- imputeFAMD(dataset, ncp = nb$ncp)
@@ -103,10 +107,17 @@ impute_missforest <- function(dataset) {
   return(data.imp$ximp)
 }
 
-
 # dla id = 6332 rzuca błąd: Error in 1L:ncol(Y) : argument of length 0
 impute_VIM_irmi <- function(dataset) {
   return(irmi(dataset, imp_var=FALSE))
+}
+
+impute_softImpute_mode <- function(dataset) {
+  factors <- unlist(lapply(dataset, is.factor))
+  num_imp <- softImpute::complete(dataset[!factors], softImpute(dataset[!factors],trace=TRUE,type="svd"))
+  fact_imp <- impute(dataset[factors], method="median/mode")
+  df <- cbind(fact_imp, num_imp)
+  return(df)
 }
 
 # ---
@@ -163,12 +174,12 @@ train_and_test <- function(dataset, imputer, learner, target, positive='1', fold
   
   aucs <- rr$score(msr('classif.auc'))
   mean_auc <- mean(aucs$classif.auc)
-  label <- paste('Mean AUC: ', round(mean(aucs$classif.auc), 2), '±', round(sd(aucs$classif.auc), 2))
+  label <- paste('Mean AUC:\n', round(mean(aucs$classif.auc), 2), '±', round(sd(aucs$classif.auc), 2))
   p1 <- autoplot(rr, type='roc') +
     labs(title='Receiver operating characteristic') +
     xlab('Specifity') +
     ylab('Sensivity') +
-    annotate(geom="label", x=0.5, y=0, label=label, fill='white') +
+    annotate(geom="label", x=0.5, y=0.1, label=label, fill='white', size=4.5, alpha=.5) +
     theme_light() +
     theme(
       legend.position = 'none',
@@ -178,7 +189,7 @@ train_and_test <- function(dataset, imputer, learner, target, positive='1', fold
   baccs <- rr$score(msr('classif.bacc'))
   mean_bacc <- mean(baccs$classif.bacc)
   baccs$iteration <- factor(baccs$iteration, levels=baccs$iteration)
-  label <- paste('Mean BACC: ', round(mean(baccs$classif.bacc), 2), '±', round(sd(baccs$classif.bacc), 2))
+  label <- paste('Mean BACC:\n', round(mean(baccs$classif.bacc), 2), '±', round(sd(baccs$classif.bacc), 2))
   p2 <- ggplot(baccs, aes(x=0, y=classif.bacc)) +
     geom_boxplot(outlier.alpha=0) +
     geom_point(aes(colour=iteration), size=2.5, alpha=.75) +
@@ -186,7 +197,7 @@ train_and_test <- function(dataset, imputer, learner, target, positive='1', fold
     labs(title='Balanced accuracy', colour='Fold') +
     xlab('') +
     ylab('') +
-    annotate(geom="label", x=0, y=0, label=label, fill='white') +
+    annotate(geom="label", x=0, y=0.1, label=label, fill='white', size=4.5, alpha=.5) +
     theme_light() +
     theme(
       axis.ticks.x=element_blank(),
@@ -198,7 +209,7 @@ train_and_test <- function(dataset, imputer, learner, target, positive='1', fold
   mccs <- rr$score(msr('classif.mcc'))
   mean_mcc <- mean(mccs$classif.mcc)
   mccs$iteration <- factor(mccs$iteration, levels=mccs$iteration)
-  label <- paste('Mean MCC: ', round(mean(mccs$classif.mcc), 2), '±', round(sd(mccs$classif.mcc), 2))
+  label <- paste('Mean MCC:\n', round(mean(mccs$classif.mcc), 2), '±', round(sd(mccs$classif.mcc), 2))
   p3 <- ggplot(mccs, aes(x=0, y=classif.mcc)) +
     geom_boxplot(outlier.alpha=0) +
     geom_point(aes(colour=iteration), size=2.5, alpha=.75) +
@@ -206,7 +217,7 @@ train_and_test <- function(dataset, imputer, learner, target, positive='1', fold
     labs(title='Matthews correlation coefficient', colour='Fold') +
     xlab('') +
     ylab('') +
-    annotate(geom='label', x=0, y=0, label=label, fill='white') +
+    annotate(geom='label', x=0, y=0.1, label=label, fill='white', size=4.5, alpha=.5) +
     theme_light() +
     theme(
       axis.ticks.x=element_blank(),
@@ -239,11 +250,3 @@ train_and_test <- function(dataset, imputer, learner, target, positive='1', fold
 
 # ------
 # example
-
-#name <- load(1590)$dataset
-#gg_miss_var(name)
-#target <- load(188)$target
-#pos=dataset[1, target]
-#dataset[, target] <- factor(unlist(lapply(dataset[, target], function(x) ifelse(x==pos, 1, 0))), levels=c(1, 0))
-#learner <- lrn('classif.ranger', predict_type='prob')
-#result <- train_and_test(dataset, imputer=impute_basic, learner=learner, target=target, positive='1', title=paste0(name, ' + basic (median/mode)'))

@@ -19,15 +19,19 @@ time_data <- data.frame(package=character(), dataset=character(),
                         train_set_imputation_time=numeric(), test_set_imputation_time=numeric(), stringsAsFactors=FALSE)
 test_data <- data.frame(package=character(), dataset=character(),
                         test_auc=numeric(), test_bacc=numeric(), test_mcc=numeric(), stringsAsFactors=FALSE)
+
 ids <- list.dirs(path='./datasets', full.names=TRUE)
 ids <- gsub("./datasets(/openml_dataset_)?", "", ids)
 ids <- na.omit(as.numeric(ids))
+ids <- ids[!ids==41278]
 ```
 
-The purpose of the report is to aggregate and examine selected techniques of imputation of missing data in the context of their impact on the prediction efficiency of classification algorithms. The following considerations include various imputation techniques, both basic (median / mode imputation) and more sophisticated (selected methods from the missForest, VIM, mice or missMDA packages).   
-For testing purposes, as the classification algorithm, we used the ranger algorithm, which is a fast implementation of random forests, particularly suited for high dimensional data. The prediction effectiveness was assessed in relation to the AUC, balanced accuracy and Matthews correlation coefficient measures.
+<div style="text-align: justify">
+The purpose of the report is to aggregate and examine selected techniques of imputation of missing data in the context of their impact on the prediction efficiency of classification algorithms. The following considerations include various imputation techniques, both basic (median / mode imputation) and more sophisticated (selected methods from the mice, VIM, missRanger and softImpute packages).   
+For testing purposes, as the classification algorithm, we used the ranger algorithm, which is a fast implementation of random forest, particularly suited for high dimensional data. The prediction effectiveness was assessed in relation to the AUC, balanced accuracy and Matthews correlation coefficient measures.
 
 The report contains, all the results, grouped by both: package and dataset.
+</div>
 
 ## Basic (median/mode)
   
@@ -40,29 +44,29 @@ src1 <- lapply(ids, function(id) knit_expand(file='./templates/basic.Rmd'))
 ## Mice
 
 ```{r mice, include=FALSE}
-src5 <- lapply(ids, function(id) knit_expand(file='./templates/mice.Rmd'))
-```
-
-`r knit(text=unlist(src5))`  
-
-
-## K-Nearest Neighbors (VIM)
-  
-```{r VIM_knn, include=FALSE}
-src2 <- lapply(ids, function(id) knit_expand(file='./templates/VIM_knn.Rmd'))
+src2 <- lapply(ids, function(id) knit_expand(file='./templates/mice.Rmd'))
 ```
 
 `r knit(text=unlist(src2))`  
 
-## Hot Deck (VIM)
-  
-```{r VIM_hotdeck, include=FALSE}
-src3 <- lapply(ids, function(id) knit_expand(file='./templates/VIM_hotdeck.Rmd'))
+
+## VIM (K-Nearest Neighbors)
+
+```{r VIM_knn, include=FALSE}
+src3 <- lapply(ids, function(id) knit_expand(file='./templates/VIM_knn.Rmd'))
 ```
 
-`r knit(text=unlist(src3))`   
+`r knit(text=unlist(src3))`  
 
-## MissRanger
+## VIM (Hot Deck)
+  
+```{r VIM_hotdeck, include=FALSE}
+src4 <- lapply(ids, function(id) knit_expand(file='./templates/VIM_hotdeck.Rmd'))
+```
+
+`r knit(text=unlist(src4))`   
+
+## missRanger
   
 ```{r missRanger, include=FALSE}
 src5 <- lapply(ids, function(id) knit_expand(file='./templates/missRanger.Rmd'))
@@ -70,9 +74,17 @@ src5 <- lapply(ids, function(id) knit_expand(file='./templates/missRanger.Rmd'))
 
 `r knit(text=unlist(src5))`  
 
+## softImpute
+  
+```{r softImpute, include=FALSE}
+src6 <- lapply(ids, function(id) knit_expand(file='./templates/softImpute.Rmd'))
+```
+
+`r knit(text=unlist(src6))`  
 
 ```{r save results, include=FALSE}
-# dump results to file, just in case
+# dump results to file
 write.csv(time_data, "time_data.csv", row.names=FALSE)
 write.csv(test_data, "test_data.csv", row.names=FALSE)
 ```
+  
