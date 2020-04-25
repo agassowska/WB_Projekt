@@ -1,17 +1,22 @@
 ```{r softImpute_{{id}}, include=FALSE, warning=FALSE, message=FALSE}
-load_result <- load({{id}})
+load_result_raw <- load_raw({{id}})
 
-name <- load_result$name
-dataset <- load_result$dataset
-target <- load_result$target
+dataset <- load_result_raw$dataset
+name <- load_result_raw$name
+target <- load_result_raw$target
 
-pos=dataset[1, target]
-dataset[, target] <- factor(unlist(lapply(dataset[, target], function(x) ifelse(x==pos, 1, 0))), levels=c(1, 0))
+load_result_imputed <- load_imputed({{id}}, 'softImpute')
+
+train <- load_result_imputed$train
+test <- load_result_imputed$test
+
+pos=train[1, target]
+train[, target] <- factor(unlist(lapply(train[, target], function(x) ifelse(x==pos, 1, 0))), levels=c(1, 0))
+test[, target] <- factor(unlist(lapply(test[, target], function(x) ifelse(x==pos, 1, 0))), levels=c(1, 0))
 
 learner <- lrn('classif.ranger', predict_type='prob')
-result <- train_and_test(dataset, imputer=impute_softImpute_mode, learner=learner, target=target, positive='1', title=paste0(name, ' + softImpute'))
+result <- train_and_test(train=train, test=test, learner=learner, target=target, title=paste0(name, ' + softImpute'))
 
-time_data[nrow(time_data)+1, ] <- c('softImpute', name, result$train_dataset_imputation_time, result$test_dataset_imputation_time)
 test_data[nrow(test_data)+1, ] <- c('softImpute', name, result$test_auc, result$test_bacc, result$test_mcc)
 ```
 
@@ -24,8 +29,8 @@ result$cv_plot
 
 #### Imputation times
 ```{r softImpute_{{id}}_times, echo=FALSE}
-cat(paste('Train set imputation time: ', round(result$train_dataset_imputation_time, 3)))
-cat(paste('Test set imputation time: ', round(result$test_dataset_imputation_time, 3)))
+times <- read.csv('./time_data/softImpute/time_data.csv')
+cat(paste('Imputation time: ', round(times[times[['dataset']]==name, 'imputation_time'], 3)))
 ```
 
 #### Test set results

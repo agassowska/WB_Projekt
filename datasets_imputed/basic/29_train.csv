@@ -1,4 +1,4 @@
-"Sex","Age","Debt","Married","BankCustomer","EducationLevel","Ethicity","Years.employed","PriorDefault","Employed","CreditScore","Driverslicense","Citizen","Zipcode","Income","class"
+"Sex","Age","Debt","Married","BankCustomer","EducationLevel","Ethicity","Yearsemployed","PriorDefault","Employed","CreditScore","Driverslicense","Citizen","Zipcode","Income","class"
 "b",19.42,6.5,"u","g","w","h",1.46,"t","t",7,"f","g",80,2954,"+"
 "a",35.75,0.915,"u","g","aa","v",0.75,"t","t",4,"f","g",0,1583,"+"
 "b",17.42,6.5,"u","g","i","v",0.125,"f","f",0,"f","g",60,100,"-"

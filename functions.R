@@ -85,45 +85,62 @@ inner_load_imputed <- function(id, package) {
 
 # takes clean dataset with missing values (additional arguments must have default values) and returns an imputed dataset
 
+fix_names <- function(dataset) {
+  names(dataset) <- str_replace_all(names(dataset), pattern=' ', replacement='')
+  colnames(dataset) <- make.names(colnames(dataset), unique=TRUE)
+  
+  return(dataset)
+}
+
 impute_basic <- function(dataset) {
-  dataset_imputed <- data.frame(impute(dataset, method='median/mode'))
+  dataset <- fix_names(dataset)
+  
+  dataset_imputed <- data.frame(imputeMissings::impute(dataset, method='median/mode'))
   
   return(dataset_imputed)
 }
 
 impute_missRanger <- function(dataset) {
-  colnames(dataset) <- make.names(colnames(dataset), unique=T)
+  dataset <- fix_names(dataset)
+  
   dataset_imputed <- missRanger(dataset, maxiter=5)
   
   return(dataset_imputed)
 }
 
 impute_VIM_knn <- function(dataset) {
+  dataset <- fix_names(dataset)
+  
   dataset_imputed <- kNN(dataset, imp_var=FALSE, trace=TRUE)
   
   return(dataset_imputed)
 }
 
 impute_VIM_hotdeck <- function(dataset) {
+  dataset <- fix_names(dataset)
+  
   dataset_imputed <- hotdeck(dataset, imp_var=FALSE, trace=TRUE)
   
   return(dataset_imputed)
 }
 
-impute_mice <- function(dataset) {
-  names(dataset) <- str_replace_all(names(dataset), pattern = " ", replacement = "")
-  colnames(dataset) <- make.names(colnames(dataset), unique = T)
-  missings <- is.na(dataset)
-  return(mice::complete(mice(data=dataset, nnet.MaxNWts=3000, diagnostics=FALSE, remove_collinear=FALSE, method='pmm', where=missings, printFlag=TRUE)))
-}
-
 impute_softImpute_mode <- function(dataset) {
+  dataset <- fix_names(dataset)
+  
   factors <- unlist(lapply(dataset, is.factor))
   num_imp <- softImpute::complete(dataset[!factors], softImpute(dataset[!factors], trace=TRUE, type='svd'))
   fact_imp <- imputeMissings::impute(dataset[factors], method='median/mode')
   dataset_imputed <- cbind(fact_imp, num_imp)
   
   return(dataset_imputed)
+}
+
+# takes really looong time...
+impute_mice <- function(dataset) {
+  names(dataset) <- str_replace_all(names(dataset), pattern = " ", replacement = "")
+  colnames(dataset) <- make.names(colnames(dataset), unique = T)
+  missings <- is.na(dataset)
+  return(mice::complete(mice(data=dataset, nnet.MaxNWts=3000, diagnostics=FALSE, remove_collinear=FALSE, method='pmm', where=missings, printFlag=TRUE)))
 }
 
 # ---
@@ -135,9 +152,9 @@ impute_softImpute_mode <- function(dataset) {
 # - train_size - size (0-1) of train set (default value is 0.8)
 # - save - whether to save imputed datasets to datasets_imputed
 # returns:
-# train - imputed train dataset
-# test - imputed test dataet
-# time - total imputation time
+# - train - imputed train dataset
+# - test - imputed test dataet
+# - time - total imputation time
 
 split_and_impute <- function(id, imputer, package, train_size=0.8, save=TRUE) {
   load_result <- load_raw(id)
@@ -193,10 +210,6 @@ split_and_impute <- function(id, imputer, package, train_size=0.8, save=TRUE) {
 # - learner - learner trained on whole train set
 
 train_and_test <- function(train, test, learner, target, positive='1', folds=5, title='') {
-  pos=train[1, target]
-  train[, target] <- factor(unlist(lapply(train[, target], function(x) ifelse(x==pos, 1, 0))), levels=c(1, 0))
-  pos=test[1, target]
-  test[, target] <- factor(unlist(lapply(test[, target], function(x) ifelse(x==pos, 1, 0))), levels=c(1, 0))
   # crossvalidation
   resampling <- rsmp("cv", folds=folds)
   task_cv <- TaskClassif$new(id='task_cv', backend=train, target=target, positive=positive)
