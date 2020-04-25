@@ -146,6 +146,7 @@ impute_mice <- function(dataset) {
 
 # Amelia
 impute_amelia <- function(dataset){
+  dataset <- fix_names(dataset)
   factors <- colnames(dataset[unlist(lapply(dataset, is.factor))])
   imp <- amelia(dataset, ords = factors, parallel = 'multicore', m=1, incheck = FALSE)
   return(as.data.frame(imp$imputations))
