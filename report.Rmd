@@ -21,7 +21,6 @@ test_data <- data.frame(package=character(), dataset=character(),
 ids <- list.dirs(path='./datasets_raw', full.names=TRUE)
 ids <- gsub("./datasets_raw(/openml_dataset_)?", "", ids)
 ids <- na.omit(as.numeric(ids))
-ids <- ids[!ids==41278]
 ```
 
 <div style="text-align: justify">

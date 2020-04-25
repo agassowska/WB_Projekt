@@ -42,7 +42,7 @@ time_data <- data.frame(package=character(), dataset=character(), imputation_tim
 for(id in ids) {
   load_result <- load_raw(id)
   name <- load_result$name
-  time <- split_and_impute(id, impute_VIM_knn, 'VIM_hotdeck')$time
+  time <- split_and_impute(id, impute_VIM_hotdeck, 'VIM_hotdeck')$time
   time_data[nrow(time_data)+1, ] <- c('VIM_hotdeck', name, time)
 }
 write.csv(x=time_data, file='./time_data/VIM_hotdeck/time_data.csv', row.names=FALSE)
@@ -52,7 +52,7 @@ time_data <- data.frame(package=character(), dataset=character(), imputation_tim
 for(id in ids) {
   load_result <- load_raw(id)
   name <- load_result$name
-  time <- split_and_impute(id, impute_VIM_knn, 'softImpute')$time
+  time <- split_and_impute(id, impute_softImpute_mode, 'softImpute')$time
   time_data[nrow(time_data)+1, ] <- c('softImpute', name, time)
 }
 write.csv(x=time_data, file='./time_data/softImpute/time_data.csv', row.names=FALSE)

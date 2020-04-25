@@ -17,7 +17,7 @@ test[, target] <- factor(unlist(lapply(test[, target], function(x) ifelse(x==pos
 learner <- lrn('classif.ranger', predict_type='prob')
 result <- train_and_test(train=train, test=test, learner=learner, target=target, title=paste0(name, ' + basic (median/mode)'))
 
-test_data[nrow(test_data)+1, ] <- c('basic_(median/mode)', name, result$test_auc, result$test_bacc, result$test_mcc)
+test_data[nrow(test_data)+1, ] <- c('basic', name, result$test_auc, result$test_bacc, result$test_mcc)
 ```
 
 ### `r name` {.tabset .tabset-fade .tabset-pills}

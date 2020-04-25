@@ -119,7 +119,7 @@ impute_VIM_knn <- function(dataset) {
 impute_VIM_hotdeck <- function(dataset) {
   dataset <- fix_names(dataset)
   
-  dataset_imputed <- hotdeck(dataset, imp_var=FALSE, trace=TRUE)
+  dataset_imputed <- hotdeck(dataset, imp_var=FALSE)
   
   return(dataset_imputed)
 }
