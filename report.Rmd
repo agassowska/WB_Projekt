@@ -21,6 +21,7 @@ test_data <- data.frame(package=character(), dataset=character(),
 ids <- list.dirs(path='./datasets_raw', full.names=TRUE)
 ids <- gsub("./datasets_raw(/openml_dataset_)?", "", ids)
 ids <- na.omit(as.numeric(ids))
+ids <- ids[!ids %in% c(1018, 41278)]
 ```
 
 <div style="text-align: justify">
@@ -69,6 +70,14 @@ src5 <- lapply(ids, function(id) knit_expand(file='./templates/softImpute.Rmd'))
 ```
 
 `r knit(text=unlist(src5))` 
+
+## mice
+
+```{r mice, include=FALSE}
+src6 <- lapply(ids, function(id) knit_expand(file='./templates/mice.Rmd'))
+```
+
+`r knit(text=unlist(src6))` 
 
 ```{r save results, include=FALSE}
 # dump results to file

@@ -12,6 +12,7 @@ library(softImpute)
 library(missRanger)
 library(mice)
 library(VIM)
+library(Amelia)
 
 library(mlr3)
 library(mlr3learners)
@@ -135,12 +136,22 @@ impute_softImpute_mode <- function(dataset) {
   return(dataset_imputed)
 }
 
+impute_amelia <- function(dataset){
+  dataset <- fix_names(dataset)
+  factors <- colnames(dataset[unlist(lapply(dataset, is.factor))])
+  empri <- nrow(dataset)/100
+  imp <- amelia(dataset, ords=factors, parallel='multicore', m=1, ncpus=4, incheck=FALSE)
+  dataset_imputed <- as.data.frame(imp$imputations)
+  
+  return(dataset_imputed)
+}
+
 # takes really looong time...
 impute_mice <- function(dataset) {
   names(dataset) <- str_replace_all(names(dataset), pattern = " ", replacement = "")
   colnames(dataset) <- make.names(colnames(dataset), unique = T)
   missings <- is.na(dataset)
-  return(mice::complete(mice(data=dataset, nnet.MaxNWts=3000, diagnostics=FALSE, remove_collinear=FALSE, method='pmm', where=missings, printFlag=TRUE)))
+  return(mice::complete(mice(data=dataset, diagnostics=FALSE, remove_collinear=FALSE, method='pmm', where=missings, printFlag=TRUE)))
 }
 
 # ---
