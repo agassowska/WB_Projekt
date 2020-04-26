@@ -154,6 +154,15 @@ impute_mice <- function(dataset) {
   return(mice::complete(mice(data=dataset, diagnostics=FALSE, remove_collinear=FALSE, method='pmm', where=missings, printFlag=TRUE)))
 }
 
+impute_amelia <- function(dataset){
+  dataset <- fix_names(dataset)
+  factors <- colnames(dataset[unlist(lapply(dataset, is.factor))])
+  imp <- amelia(dataset, ords = factors, parallel = 'multicore', m=1, incheck = FALSE)
+  dataset_imputed <- as.data.frame(imp$imputations)
+  
+  return(dataset_imputed)
+}
+
 # ---
 # split_and_impute function
 
