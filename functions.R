@@ -17,6 +17,7 @@ library(Amelia)
 library(mlr3)
 library(mlr3learners)
 library(mlr3measures)
+library(mlr3pipelines)
 library(mlr3viz)
 
 #devtools::install_github("jabiru/tictoc")

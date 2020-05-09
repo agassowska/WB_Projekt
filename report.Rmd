@@ -15,13 +15,14 @@ theme: lumen
 library(knitr)
 source('functions.R')
 
-test_data <- data.frame(package=character(), dataset=character(),
-                        test_auc=numeric(), test_bacc=numeric(), test_mcc=numeric(), stringsAsFactors=FALSE)
+test_data <- data.frame(model=character(), package=character(), dataset=character(),
+                        test_auc=numeric(), test_bacc=numeric(), test_mcc=numeric(),
+                        stringsAsFactors=FALSE)
 
 ids <- list.dirs(path='./datasets_raw', full.names=TRUE)
 ids <- gsub("./datasets_raw(/openml_dataset_)?", "", ids)
 ids <- na.omit(as.numeric(ids))
-ids <- ids[!ids %in% c(1018, 41278)]
+ids <- ids[!ids %in% c(1018, 41278, 23381, 29)]
 ```
 
 <div style="text-align: justify">
@@ -31,53 +32,105 @@ For testing purposes, as the classification algorithm, we used the ranger algori
 The report contains, all the results, grouped by both: package and dataset.
 </div>
 
+## **ranger**
+
 ## basic (median/mode)
 
-```{r basic, include=FALSE}
-src1 <- lapply(ids, function(id) knit_expand(file='./templates/basic.Rmd'))
+```{r ranger_basic, include=FALSE}
+src1 <- lapply(ids, function(id) knit_expand(file='./templates/ranger/basic.Rmd'))
 ```
 
 `r knit(text=unlist(src1))`
 
 ## missRanger
 
-```{r missRanger, include=FALSE}
-src2 <- lapply(ids, function(id) knit_expand(file='./templates/missRanger.Rmd'))
+```{r ranger_missRanger, include=FALSE}
+src2 <- lapply(ids, function(id) knit_expand(file='./templates/ranger/missRanger.Rmd'))
 ```
 
 `r knit(text=unlist(src2))` 
 
 ## VIM (knn)
 
-```{r VIM_knn, include=FALSE}
-src3 <- lapply(ids, function(id) knit_expand(file='./templates/VIM_knn.Rmd'))
+```{r ranger_VIM_knn, include=FALSE}
+src3 <- lapply(ids, function(id) knit_expand(file='./templates/ranger/VIM_knn.Rmd'))
 ```
 
 `r knit(text=unlist(src3))`
 
 ## VIM (hotdeck)
 
-```{r VIM_hotdeck, include=FALSE}
-src4 <- lapply(ids, function(id) knit_expand(file='./templates/VIM_hotdeck.Rmd'))
+```{r ranger_VIM_hotdeck, include=FALSE}
+src4 <- lapply(ids, function(id) knit_expand(file='./templates/ranger/VIM_hotdeck.Rmd'))
 ```
 
 `r knit(text=unlist(src4))` 
 
 ## softImpute
 
-```{r softImpute, include=FALSE}
-src5 <- lapply(ids, function(id) knit_expand(file='./templates/softImpute.Rmd'))
+```{r ranger_softImpute, include=FALSE}
+src5 <- lapply(ids, function(id) knit_expand(file='./templates/ranger/softImpute.Rmd'))
 ```
 
 `r knit(text=unlist(src5))` 
 
 ## mice
 
-```{r mice, include=FALSE}
-src6 <- lapply(ids, function(id) knit_expand(file='./templates/mice.Rmd'))
+```{r ranger_mice, include=FALSE}
+src6 <- lapply(ids, function(id) knit_expand(file='./templates/ranger/mice.Rmd'))
 ```
 
 `r knit(text=unlist(src6))` 
+
+## **xgboost**
+
+## basic (median/mode)
+
+```{r xgboost_basic, include=FALSE}
+src1 <- lapply(ids, function(id) knit_expand(file='./templates/xgboost/basic.Rmd'))
+```
+
+`r knit(text=unlist(src1))`
+
+## missRanger
+
+```{r xgboost_missRanger, include=FALSE}
+src2 <- lapply(ids, function(id) knit_expand(file='./templates/xgboost/missRanger.Rmd'))
+```
+
+`r knit(text=unlist(src2))` 
+
+## VIM (knn)
+
+```{r xgboost_VIM_knn, include=FALSE}
+src3 <- lapply(ids, function(id) knit_expand(file='./templates/xgboost/VIM_knn.Rmd'))
+```
+
+`r knit(text=unlist(src3))`
+
+## VIM (hotdeck)
+
+```{r xgboost_VIM_hotdeck, include=FALSE}
+src4 <- lapply(ids, function(id) knit_expand(file='./templates/xgboost/VIM_hotdeck.Rmd'))
+```
+
+`r knit(text=unlist(src4))` 
+
+## softImpute
+
+```{r xgboost_softImpute, include=FALSE}
+src5 <- lapply(ids, function(id) knit_expand(file='./templates/xgboost/softImpute.Rmd'))
+```
+
+`r knit(text=unlist(src5))` 
+
+## mice
+
+```{r xgboost_mice, include=FALSE}
+src6 <- lapply(ids, function(id) knit_expand(file='./templates/xgboost/mice.Rmd'))
+```
+
+`r knit(text=unlist(src6))`
 
 ```{r save results, include=FALSE}
 # dump results to file
