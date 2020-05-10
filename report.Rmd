@@ -132,8 +132,112 @@ src6 <- lapply(ids, function(id) knit_expand(file='./templates/xgboost/mice.Rmd'
 
 `r knit(text=unlist(src6))`
 
+
+## **kNN**
+
+## basic (median/mode)
+
+```{r kNN_basic, include=FALSE}
+src1 <- lapply(ids, function(id) knit_expand(file='./templates/kNN/basic.Rmd'))
+```
+
+`r knit(text=unlist(src1))`  
+
+## missRanger
+
+```{r kNN_missRanger, include=FALSE}
+src2 <- lapply(ids, function(id) knit_expand(file='./templates/kNN/missRanger.Rmd'))
+```
+
+`r knit(text=unlist(src2))` 
+
+## VIM (knn)
+
+```{r kNN_VIM_knn, include=FALSE}
+src3 <- lapply(ids, function(id) knit_expand(file='./templates/kNN/VIM_knn.Rmd'))
+```
+
+`r knit(text=unlist(src3))`
+
+## VIM (hotdeck)
+
+```{r kNN_VIM_hotdeck, include=FALSE}
+src4 <- lapply(ids, function(id) knit_expand(file='./templates/kNN/VIM_hotdeck.Rmd'))
+```
+
+`r knit(text=unlist(src4))` 
+
+## softImpute
+
+```{r kNN_softImpute, include=FALSE}
+src5 <- lapply(ids, function(id) knit_expand(file='./templates/kNN/softImpute.Rmd'))
+```
+
+`r knit(text=unlist(src5))` 
+
+## mice
+
+```{r kNN_mice, include=FALSE}
+src6 <- lapply(ids, function(id) knit_expand(file='./templates/kNN/mice.Rmd'))
+```
+
+`r knit(text=unlist(src6))`  
+
+## **Naive Bayes**
+
+## basic (median/mode)
+
+```{r naive_bayes_basic, include=FALSE}
+src1 <- lapply(ids, function(id) knit_expand(file='./templates/naive_bayes/basic.Rmd'))
+```
+
+`r knit(text=unlist(src1))`  
+
+## missRanger
+
+```{r naive_bayes_missRanger, include=FALSE}
+src2 <- lapply(ids, function(id) knit_expand(file='./templates/naive_bayes/missRanger.Rmd'))
+```
+
+`r knit(text=unlist(src2))` 
+
+## VIM (knn)
+
+```{r naive_bayes_VIM_knn, include=FALSE}
+src3 <- lapply(ids, function(id) knit_expand(file='./templates/naive_bayes/VIM_knn.Rmd'))
+```
+
+`r knit(text=unlist(src3))`
+
+## VIM (hotdeck)
+
+```{r naive_bayes_VIM_hotdeck, include=FALSE}
+src4 <- lapply(ids, function(id) knit_expand(file='./templates/naive_bayes/VIM_hotdeck.Rmd'))
+```
+
+`r knit(text=unlist(src4))` 
+
+## softImpute
+
+```{r naive_bayes_softImpute, include=FALSE}
+src5 <- lapply(ids, function(id) knit_expand(file='./templates/naive_bayes/softImpute.Rmd'))
+```
+
+`r knit(text=unlist(src5))` 
+
+## mice
+
+```{r naive_bayes_mice, include=FALSE}
+src6 <- lapply(ids, function(id) knit_expand(file='./templates/naive_bayes/mice.Rmd'))
+```
+
+`r knit(text=unlist(src6))`  
+
 ```{r save results, include=FALSE}
 # dump results to file
 write.csv(test_data, "./test_data/test_data.csv", row.names=FALSE)
-```
+```  
+
+
+
   
