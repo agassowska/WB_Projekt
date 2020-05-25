@@ -64,10 +64,15 @@ The prediction effectiveness for each alghoritm  was assessed in relation to the
 
 ## Results
 
-Each imputation function was performed on ten benchmarking datasets with missing data, divided into test and train sets. We gathered the predictions for test sets from ranger Random Forest, kNN, Naive Bayes, and XGBoost models fitted on train sets. points). For each of the used measures (AUC, BACC and MCC) and for each classification algorithm we created a ranking. The method gets 1 point if it gives the best result on a dataset, and 6 points if it is the worst one. We created a boxplot for each method. (See plot 1) . We also created a scatter plot where for each dataset, the results of each imputation method can be compared (see plot 2). The time of imputation was also measured. (See plot 3).
+Each imputation function was performed on ten benchmarking datasets with missing data, divided into test and train sets. We gathered the predictions for test sets from ranger Random Forest, kNN, Naive Bayes, and XGBoost models fitted on train sets. points). For each of the used measures (AUC, BACC and MCC) and for each classification algorithm we created a ranking. The method gets 1 point if it gives the best result on a dataset, and 6 points if it is the worst one. We created a boxplot for each method. (See Figure 1) . We also created a scatter plot where for each dataset, the results of each imputation method can be compared (see Figure 2). The time of imputation was also measured. (See Figure 3).
 
 It should be mentioned that any differences in results are only due to a change in the imputation technique. Each of them was performed on the same sets with identical divisions into train and test sets. So even small differences should be taken into consideration. It is also important that we took into consideration only datasets on which all of the imputation methods work, so that it can be compared fairly.
 
+![Scores for each dataset](final_plots_revisited/measures_plot.png)
+
+![Rankings of imputation methods](final_plots_revisited/rankings_plot.png)
+
+![Time of imputation](final_plots_revisited/times_plot.png)
 
 
 
