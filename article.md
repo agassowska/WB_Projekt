@@ -17,7 +17,10 @@ The differences in the results of the classification algorithm for the imputatio
 
 ## Introduction
 
-Dealing with missing data is a substantial part of feature engineering as most of the machine learning algorithms do not accept incomplete datasets. Data imputation, which is replacing missing values with a value based on other available cases, is the solution for that problem. However, despite the acknowledged importance of it, in many practical cases it is not handled with proper caution. Basic median/mode imputation is often used, as well as deleting rows with missing data (if the number of missing values is low).   
+Dealing with missing data is a substantial part of feature engineering as most of the machine learning algorithms do not accept incomplete datasets. Data imputation, which is replacing missing values with a value based on other available cases, is the solution for that problem. However, despite the acknowledged importance of it, in many practical cases it is not handled with proper caution. Basic median/mode imputation is often used, as well as deleting rows with missing data (if the number of missing values is low). 
+
+
+As there are many different imputation techniques, choosing which one to use is complicated. There are no objective rules to follow, the only way to choose the best one is checking every one of them. The purpose of our experiment is to find best ways to impute data while using specific algorithms. 
 
 
 This paper introduces imputation techniques in the context of their impact on the the time of filling missing data and the prediction efficiency of four classification algorithms (k nearest neighbours, naive bayes, XGBoost and Ranger Random Forest).
@@ -61,11 +64,14 @@ The prediction effectiveness for each alghoritm  was assessed in relation to the
 
 ## Results
 
-Each imputation function was performed on ten(!!!! ZMIENIĆ) benchmarking datasets with missing data, divided into test and train sets. We gathered the predictions for test sets from ranger Random Forest, kNN, Naive Bayes, and XGBoost models fitted on train sets, and compared them using AUC, BACC and MCC (see Table1, Figure1, Figure2 and Figure3-ZMIENIĆ JAK BĘDĄ RYSUNKI). We also measured the time of each imputation and compared it (Figure 4). 
+Each imputation function was performed on ten benchmarking datasets with missing data, divided into test and train sets. We gathered the predictions for test sets from ranger Random Forest, kNN, Naive Bayes, and XGBoost models fitted on train sets. points). For each of the used measures (AUC, BACC and MCC) and for each classification algorithm we created a ranking. The method gets 1 point if it gives the best result on a dataset, and 6 points if it is the worst one. We created a boxplot for each method. (See plot 1) . We also created a scatter plot where for each dataset, the results of each imputation method can be compared (see plot 2). The time of imputation was also measured. (See plot 3).
+
+It should be mentioned that any differences in results are only due to a change in the imputation technique. Each of them was performed on the same sets with identical divisions into train and test sets. So even small differences should be taken into consideration. It is also important that we took into consideration only datasets on which all of the imputation methods work, so that it can be compared fairly.
 
 
-It should be mentioned that any differences in results are only due to a change in the imputation technique. Each of them was performed on the same sets with identical divisions into train and test sets. So even small differences should be taken into consideration. 
 
+
+## Conclusions
 
 
 
